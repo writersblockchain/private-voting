@@ -1,8 +1,8 @@
 use crate::error::{ContractError, CryptoError};
 use crate::msg::{
-    DecryptedResponse, ExecuteMsg, GetStoredMessageResp, InstantiateMsg, KeysResponse, QueryMsg,
+    DecryptedResponse, ExecuteMsg, GetStoredVotesResp, InstantiateMsg, KeysResponse, QueryMsg,
 };
-use crate::state::{Decrypted, MyKeys, MyMessage, DECRYPTED, MY_KEYS, STORED_MESSAGE};
+use crate::state::{Decrypted, MyKeys, Votes, ALL_VOTES, DECRYPTED, MY_KEYS};
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
 };
@@ -60,7 +60,6 @@ pub fn try_create_keys(deps: DepsMut, env: Env) -> Result<Response, ContractErro
 
     let public_key = PublicKey::from_secret_key(&secp, &private_key);
     let public_key_bytes = public_key.serialize().to_vec();
-    // let public_key_string = public_key.to_string();
 
     let my_keys = MyKeys {
         private_key: private_key_bytes,
@@ -156,19 +155,37 @@ pub fn receive_message_evm(
     _source_address: String,
     payload: Binary,
 ) -> Result<Response, ContractError> {
-    // decode the payload
-    // executeMsgPayload: [sender, message]
-    let decoded = decode(&vec![ParamType::Bytes], payload.as_slice()).unwrap();
+    // Decode the payload
+    let decoded = decode(&vec![ParamType::Bytes], payload.as_slice()).map_err(|_| {
+        ContractError::CustomError {
+            val: "decoding error".to_string(),
+        }
+    })?; // Added error handling for decoding
+    let vote = decoded[0].to_string();
 
-    // store message
-    STORED_MESSAGE.save(
+    // Load the existing votes or initialize an empty vector if none exist
+    let mut previous_votes = match ALL_VOTES.may_load(deps.storage) {
+        Ok(Some(votes_data)) => votes_data.votes,
+        Ok(None) => Vec::new(), // Initialize an empty vector if no votes are present
+        Err(_) => {
+            return Err(ContractError::CustomError {
+                val: "loading error".to_string(),
+            })
+        } // Handle potential loading error
+    };
+
+    // Add the new vote
+    previous_votes.push(vote);
+
+    // Save the updated list of votes
+    ALL_VOTES.save(
         deps.storage,
-        &MyMessage {
-            message: decoded[0].to_string(),
+        &Votes {
+            votes: previous_votes,
         },
     )?;
 
-    Ok(Response::new())
+    Ok(Response::new().add_attribute("method", "receive_message_evm"))
 }
 
 #[entry_point]
@@ -176,7 +193,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetKeys {} => to_binary(&query_keys(deps)?),
         QueryMsg::GetDecrypted {} => to_binary(&query_decrypted(deps)?),
-        QueryMsg::GetStoredMessage {} => to_binary(&get_stored_message(deps)?),
+        QueryMsg::GetStoredVotes {} => to_binary(&get_stored_votes(deps)?),
     }
 }
 
@@ -187,10 +204,10 @@ fn query_decrypted(deps: Deps) -> StdResult<DecryptedResponse> {
     })
 }
 
-pub fn get_stored_message(deps: Deps) -> StdResult<GetStoredMessageResp> {
-    let message = STORED_MESSAGE.may_load(deps.storage).unwrap().unwrap();
-    let resp = GetStoredMessageResp {
-        message: message.message,
+pub fn get_stored_votes(deps: Deps) -> StdResult<GetStoredVotesResp> {
+    let message = ALL_VOTES.may_load(deps.storage).unwrap().unwrap();
+    let resp = GetStoredVotesResp {
+        votes: message.votes,
     };
     Ok(resp)
 }

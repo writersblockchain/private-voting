@@ -1,5 +1,5 @@
 const miscreant = require("miscreant");
-// const { toUtf8 } = require("@cosmjs/encoding");
+const { toUtf8 } = require("@cosmjs/encoding");
 const secp256k1 = require("secp256k1/elliptic.js");
 const dotenv = require("dotenv");
 
@@ -7,8 +7,8 @@ let provider = new miscreant.PolyfillCryptoProvider();
 let ciphertext;
 
 let secret_pubKey = new Uint8Array([
-  3, 227, 32, 216, 122, 66, 236, 199, 190, 134, 199, 177, 104, 31, 151, 57, 142,
-  138, 41, 174, 161, 88, 178, 119, 161, 55, 191, 32, 201, 174, 171, 3, 7,
+  2, 204, 234, 158, 20, 217, 31, 58, 255, 124, 211, 21, 69, 50, 0, 93, 88, 250,
+  182, 246, 23, 208, 160, 93, 253, 38, 140, 20, 16, 136, 199, 107, 45,
 ]);
 
 let privateKey = dotenv.config().parsed.MY_PRIV_KEY;
@@ -33,3 +33,5 @@ let encrypt = async (msg, associatedData = []) => {
     throw e;
   }
 };
+
+module.exports = { encrypt };

@@ -25,7 +25,7 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     GetKeys {},
     GetDecrypted {},
-    GetStoredMessage {},
+    GetStoredVotes {},
 }
 
 // We define a custom struct for each query response
@@ -42,6 +42,6 @@ pub struct DecryptedResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub struct GetStoredMessageResp {
-    pub message: String,
+pub struct GetStoredVotesResp {
+    pub votes: Vec<String>,
 }

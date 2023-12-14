@@ -1,25 +1,22 @@
 const { fromBase64, fromHex, toUtf8 } = require("@cosmjs/encoding");
 const { ethers } = require("hardhat");
+const { encrypt } = require("./encrypt");
 
 async function vote() {
-  const sendReceiveEncryptAddress =
-    "0xB0Ce0cb80a6a1E38EA00E3476327C783FbaA6B46"; // Replace with your deployed contract's address
+  const privateVotingAddress = "0xd1feaa329E3b39f709A0f4a7212b097bb247d736"; // Replace with your deployed contract's address
   const destinationChain = "secret"; // Replace with your desired destination chain
-  const destinationAddress = "secret1z3dt84jeczmx2eqr2yxp7n9ym3utzqrt2dt3xr"; // Replace with your desired destination address
+  const destinationAddress = "secret1aqe9e093wmmxk0jr5dus0h8kyey7yk0qpj4p6h"; // Replace with your desired destination address
 
-  let msg = { vote: "yes" };
+  let msg = { answer: "gratitude" };
   let my_encrypted_message = await encrypt(msg);
-  const SendReceiveEncrypt = await ethers.getContractFactory(
-    "SendReceiveEncrypt"
-  );
-  const sendReceiveEncrypt = await SendReceiveEncrypt.attach(
-    sendReceiveEncryptAddress
-  );
+  let PrivateVoting = await hre.ethers.getContractFactory("PrivateVoting");
+  const privateVoting = await PrivateVoting.attach(privateVotingAddress);
 
-  const tx = await sendReceiveEncrypt.send(
+  const tx = await privateVoting.vote(
     destinationChain,
     destinationAddress,
-    my_encrypted_message,
+    my_encrypted_message.toString(),
+
     {
       value: ethers.utils.parseEther("0.35"), // Adjust the amount as needed for gas
     }
