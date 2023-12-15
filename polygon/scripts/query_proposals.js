@@ -14,12 +14,12 @@ async function main() {
 
   // Query the number of proposals
   const nextProposalId = await contract.nextProposalId();
-  console.log(`Total Proposals: ${nextProposalId.toNumber()}`);
+  // console.log(`Total Proposals: ${nextProposalId.toNumber()}`);
 
   // Iterate over all proposals
   for (let i = 1; i < nextProposalId; i++) {
     const proposal = await contract.proposals(i);
-    console.log(`Proposal ${i}:`, proposal);
+    console.log(`Proposal:`, proposal);
   }
 }
 

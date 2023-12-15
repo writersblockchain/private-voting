@@ -1,8 +1,6 @@
 use crate::error::{ContractError, CryptoError};
-use crate::msg::{
-    DecryptedResponse, ExecuteMsg, GetStoredVotesResp, InstantiateMsg, KeysResponse, QueryMsg,
-};
-use crate::state::{Decrypted, MyKeys, Votes, ALL_VOTES, DECRYPTED, MY_KEYS};
+use crate::msg::{ExecuteMsg, GetStoredVotesResp, InstantiateMsg, KeysResponse, QueryMsg};
+use crate::state::{MyKeys, Votes, ALL_VOTES, MY_KEYS};
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
 };
@@ -38,10 +36,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::CreateKeys {} => try_create_keys(deps, env),
-        ExecuteMsg::TryDecrypt {
-            ciphertext,
-            public_key,
-        } => try_decrypt(deps, env, ciphertext, public_key),
+
         ExecuteMsg::ReceiveMessageEvm {
             source_chain,
             source_address,
@@ -71,82 +66,29 @@ pub fn try_create_keys(deps: DepsMut, env: Env) -> Result<Response, ContractErro
     Ok(Response::default())
 }
 
-pub fn try_decrypt(
-    deps: DepsMut,
-    _env: Env,
-    ciphertext: Vec<u8>,
-    public_key: Vec<u8>,
-) -> Result<Response, ContractError> {
-    let my_keys = MY_KEYS.load(deps.storage)?;
+pub fn aes_siv_decrypt(
+    ciphertexts: Vec<Vec<u8>>, // Changed to a vector of Vec<u8>
+    ad: Option<&[&[u8]]>,
+    key: &[u8],
+) -> Result<Vec<Vec<u8>>, CryptoError> {
+    let ad = ad.unwrap_or(&[&[]]);
+    let mut cipher = Aes128Siv::new(GenericArray::clone_from_slice(key));
 
-    let my_private_key = SecretKey::from_slice(my_keys.private_key.as_slice()).map_err(|e| {
-        ContractError::CustomError {
-            val: format!("Invalid private key: {}", e),
-        }
-    })?;
+    let mut decrypted_data_vec = Vec::new();
 
-    let other_public_key =
-        PublicKey::from_slice(public_key.as_slice()).map_err(|e| ContractError::CustomError {
-            val: format!("Invalid public key: {}", e),
-        })?;
-
-    let shared_secret = SharedSecret::new(&other_public_key, &my_private_key);
-    let key = shared_secret.to_vec();
-
-    let ad_data: &[&[u8]] = &[];
-    let ad = Some(ad_data);
-
-    match aes_siv_decrypt(&ciphertext, ad, &key) {
-        Ok(decrypted_data) => {
-            match String::from_utf8(decrypted_data.clone()) {
-                Ok(decrypted_string) => {
-                    let decrypted = Decrypted {
-                        decrypted: decrypted_string,
-                    };
-                    DECRYPTED.save(deps.storage, &decrypted)?;
-                    println!("Decrypted data: {:?}", decrypted.decrypted);
-                }
-                Err(e) => {
-                    warn!("Error converting decrypted data to string: {:?}", e);
-                    // Optionally, return an error here
-                }
+    for ciphertext in ciphertexts {
+        match cipher.decrypt(ad, &ciphertext) {
+            Ok(decrypted_data) => {
+                decrypted_data_vec.push(decrypted_data);
             }
-        }
-        Err(e) => {
-            warn!("Error decrypting data: {:?}", e);
-            // Optionally, return an error here if you need to indicate a failure to the caller
+            Err(e) => {
+                warn!("aes_siv_decrypt error: {:?}", e);
+                return Err(CryptoError::DecryptionError);
+            }
         }
     }
 
-    Ok(Response::default())
-}
-
-pub fn aes_siv_encrypt(
-    plaintext: &[u8],
-    ad: Option<&[&[u8]]>,
-    key: &[u8],
-) -> Result<Vec<u8>, CryptoError> {
-    let ad = ad.unwrap_or(&[&[]]);
-
-    let mut cipher = Aes128Siv::new(GenericArray::clone_from_slice(key));
-    cipher.encrypt(ad, plaintext).map_err(|e| {
-        warn!("aes_siv_encrypt error: {:?}", e);
-        CryptoError::EncryptionError
-    })
-}
-
-pub fn aes_siv_decrypt(
-    ciphertext: &[u8],
-    ad: Option<&[&[u8]]>,
-    key: &[u8],
-) -> Result<Vec<u8>, CryptoError> {
-    let ad = ad.unwrap_or(&[&[]]);
-
-    let mut cipher = Aes128Siv::new(GenericArray::clone_from_slice(key));
-    cipher.decrypt(ad, ciphertext).map_err(|e| {
-        warn!("aes_siv_decrypt error: {:?}", e);
-        CryptoError::DecryptionError
-    })
+    Ok(decrypted_data_vec)
 }
 
 pub fn receive_message_evm(
@@ -156,7 +98,7 @@ pub fn receive_message_evm(
     payload: Binary,
 ) -> Result<Response, ContractError> {
     // Decode the payload
-    let decoded = decode(&vec![ParamType::Bytes], payload.as_slice()).map_err(|_| {
+    let decoded = decode(&vec![ParamType::String], payload.as_slice()).map_err(|_| {
         ContractError::CustomError {
             val: "decoding error".to_string(),
         }
@@ -192,23 +134,52 @@ pub fn receive_message_evm(
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetKeys {} => to_binary(&query_keys(deps)?),
-        QueryMsg::GetDecrypted {} => to_binary(&query_decrypted(deps)?),
-        QueryMsg::GetStoredVotes {} => to_binary(&get_stored_votes(deps)?),
+
+        QueryMsg::GetStoredVotes {
+            public_key,
+            ciphertexts,
+        } => to_binary(&get_stored_votes(deps, public_key, ciphertexts)?),
     }
 }
 
-fn query_decrypted(deps: Deps) -> StdResult<DecryptedResponse> {
-    let decrypted = DECRYPTED.load(deps.storage)?;
-    Ok(DecryptedResponse {
-        decrypted: decrypted.decrypted,
-    })
-}
-
-pub fn get_stored_votes(deps: Deps) -> StdResult<GetStoredVotesResp> {
+pub fn get_stored_votes(
+    deps: Deps,
+    public_key: Vec<u8>,
+    ciphertexts: Vec<Vec<u8>>,
+) -> StdResult<GetStoredVotesResp> {
     let message = ALL_VOTES.may_load(deps.storage).unwrap().unwrap();
     let resp = GetStoredVotesResp {
         votes: message.votes,
     };
+
+    let my_keys = MY_KEYS.load(deps.storage)?;
+
+    let my_private_key = SecretKey::from_slice(my_keys.private_key.as_slice()).unwrap();
+
+    let other_public_key = PublicKey::from_slice(public_key.as_slice()).unwrap();
+
+    let shared_secret = SharedSecret::new(&other_public_key, &my_private_key);
+    let key = shared_secret.to_vec();
+
+    let ad_data: &[&[u8]] = &[];
+    let ad = Some(ad_data);
+
+    let decryption_result = aes_siv_decrypt(ciphertexts, ad, &key);
+
+    match decryption_result {
+        Ok(decrypted_data_vec) => {
+            // Handle the successful decryption
+            for decrypted_data in decrypted_data_vec {
+                // You can log or further process each decrypted data
+                println!("Decrypted data: {:?}", decrypted_data);
+            }
+        }
+        Err(e) => {
+            // Log the error
+            warn!("Decryption failed with error: {:?}", e);
+        }
+    }
+
     Ok(resp)
 }
 

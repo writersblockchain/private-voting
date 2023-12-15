@@ -7,14 +7,14 @@ let provider = new miscreant.PolyfillCryptoProvider();
 let ciphertext;
 
 let secret_pubKey = new Uint8Array([
-  2, 204, 234, 158, 20, 217, 31, 58, 255, 124, 211, 21, 69, 50, 0, 93, 88, 250,
-  182, 246, 23, 208, 160, 93, 253, 38, 140, 20, 16, 136, 199, 107, 45,
+  3, 110, 72, 15, 137, 103, 38, 202, 92, 3, 222, 227, 157, 231, 79, 30, 135, 82,
+  221, 199, 2, 183, 189, 216, 136, 135, 108, 56, 222, 202, 118, 183, 165,
 ]);
 
 let privateKey = dotenv.config().parsed.MY_PRIV_KEY;
 let byteArray = privateKey.split(",").map((num) => parseInt(num, 10));
 let privateKeyUint8Array = new Uint8Array(byteArray);
-console.log(privateKeyUint8Array);
+// console.log(privateKeyUint8Array);
 
 const ecdhPointX = secp256k1.ecdh(secret_pubKey, privateKeyUint8Array);
 

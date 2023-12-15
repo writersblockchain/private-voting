@@ -13,35 +13,28 @@ const secretjs = new SecretNetworkClient({
 
 // secret contract info
 let contractCodeHash =
-  "1701eb81ac7f948f4fb503197f32c87780e6eb68b2b58438829d37ea5ee03fe1";
-let contractAddress = "secret1aqe9e093wmmxk0jr5dus0h8kyey7yk0qpj4p6h";
+  "aaa576de9b93e770835d37d7cc0812a42e219350e6112540191834e314d294ed";
+let contractAddress = "secret19sa4556dmzltsaxs3zv32y220wwsuxm87r2llk";
 let encrypted_data;
 let other_public_key = process.env.MY_PUB_KEY.split(",").map((num) =>
   parseInt(num, 10)
 );
 
-// Query the contract for the stored message sent from Polygon
-let get_stored_message = async () => {
+let get_stored_votes = async () => {
   let query = await secretjs.query.compute.queryContract({
     contract_address: contractAddress,
     query: {
-      get_stored_message: {},
+      get_stored_votes: {},
     },
     code_hash: contractCodeHash,
   });
 
-  const hexString = query.message;
-
-  // Convert the hex string to a byte array
-  const byteArray = [];
-  for (let i = 0; i < hexString.length; i += 2) {
-    byteArray.push(parseInt(hexString.substring(i, i + 2), 16));
-  }
-  console.log(query);
-  // return byteArray;
+  query.votes.forEach((voteStr) => {
+    let array = voteStr.split(",").map(Number);
+    return array;
+  });
 };
-
-get_stored_message();
+get_stored_votes();
 
 let get_decrypted = async () => {
   let query = await secretjs.query.compute.queryContract({
@@ -55,11 +48,9 @@ let get_decrypted = async () => {
   console.log(query);
 };
 
-// get_decrypted();
-
 // decrypt the stored encrypted data sent from EVM
 let try_decrypt = async () => {
-  let encrypted_data = await get_stored_message();
+  let encrypted_data = await get_stored_votes();
   const tx = await secretjs.tx.compute
     .executeContract(
       {

@@ -8,8 +8,8 @@ async function create_proposal() {
   const privateVoting = await PrivateVoting.attach(privateVotingAddress);
 
   const tx = await privateVoting.createProposal(
-    "My First Question",
-    "What is the secret to life?"
+    "Grimes Question - yes or no",
+    "Is Grimes good?"
   );
 
   console.log(`Transaction hash: ${tx.hash}`);
