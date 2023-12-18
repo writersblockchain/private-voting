@@ -5,23 +5,23 @@ const { encrypt } = require("./encrypt");
 async function vote() {
   const privateVotingAddress = "0xd1feaa329E3b39f709A0f4a7212b097bb247d736"; // Replace with your deployed contract's address
   const destinationChain = "secret"; // Replace with your desired destination chain
-  const destinationAddress = "secret19sa4556dmzltsaxs3zv32y220wwsuxm87r2llk"; // Replace with your desired destination address
+  const destinationAddress = "secret16lmkn6y4r5c28m37teptqa3xl3mtvmyktdru4y"; // Replace with your desired destination address
 
   let msg = {
-    proposalId: "4",
-    answer: "no",
+    proposalId: "5",
+    answer: "yes",
   };
   let my_encrypted_message = await encrypt(msg);
   let PrivateVoting = await hre.ethers.getContractFactory("PrivateVoting");
   const privateVoting = await PrivateVoting.attach(privateVotingAddress);
 
   const tx = await privateVoting.vote(
-    4,
+    5,
     my_encrypted_message.toString(),
     destinationChain,
     destinationAddress,
     {
-      value: ethers.utils.parseEther("0.33"), // Adjust the amount as needed for gas
+      value: ethers.utils.parseEther("0.40"), // Adjust the amount as needed for gas
     }
   );
 

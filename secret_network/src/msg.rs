@@ -20,10 +20,7 @@ pub enum ExecuteMsg {
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     GetKeys {},
-    GetStoredVotes {
-        public_key: Vec<u8>,
-        ciphertexts: Vec<Vec<u8>>,
-    },
+    GetStoredVotes { public_key: Vec<u8> },
 }
 
 // We define a custom struct for each query response

@@ -13,8 +13,8 @@ const secretjs = new SecretNetworkClient({
 
 // secret contract info
 let contractCodeHash =
-  "aaa576de9b93e770835d37d7cc0812a42e219350e6112540191834e314d294ed";
-let contractAddress = "secret19sa4556dmzltsaxs3zv32y220wwsuxm87r2llk";
+  "c30ef475618ce4a4f08814cf3f12939f19b5ae41e0c8483369ee89dd58a7dc34";
+let contractAddress = "secret16lmkn6y4r5c28m37teptqa3xl3mtvmyktdru4y";
 let encrypted_data;
 
 let try_create_keys = async () => {

@@ -1,5 +1,5 @@
 use crate::error::{ContractError, CryptoError};
-use crate::msg::{ExecuteMsg, GetStoredVotesResp, InstantiateMsg, KeysResponse, QueryMsg};
+use crate::msg::{ExecuteMsg, InstantiateMsg, KeysResponse, QueryMsg};
 use crate::state::{MyKeys, Votes, ALL_VOTES, MY_KEYS};
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
@@ -12,6 +12,7 @@ use secp256k1::{PublicKey, Secp256k1, SecretKey};
 use aes_siv::aead::generic_array::GenericArray;
 use aes_siv::siv::Aes128Siv;
 use ethabi::{decode, ParamType};
+use hex;
 use log::*;
 
 #[entry_point]
@@ -98,28 +99,22 @@ pub fn receive_message_evm(
     payload: Binary,
 ) -> Result<Response, ContractError> {
     // Decode the payload
-    let decoded = decode(&vec![ParamType::String], payload.as_slice()).map_err(|_| {
-        ContractError::CustomError {
-            val: "decoding error".to_string(),
-        }
-    })?; // Added error handling for decoding
-    let vote = decoded[0].to_string();
 
-    // Load the existing votes or initialize an empty vector if none exist
+    let decoded = decode(&vec![ParamType::Bytes], payload.as_slice()).unwrap();
+
     let mut previous_votes = match ALL_VOTES.may_load(deps.storage) {
         Ok(Some(votes_data)) => votes_data.votes,
-        Ok(None) => Vec::new(), // Initialize an empty vector if no votes are present
+        Ok(None) => Vec::new(),
         Err(_) => {
             return Err(ContractError::CustomError {
                 val: "loading error".to_string(),
             })
-        } // Handle potential loading error
+        }
     };
 
-    // Add the new vote
-    previous_votes.push(vote);
+    previous_votes.push(decoded[0].to_string());
 
-    // Save the updated list of votes
+    // store message
     ALL_VOTES.save(
         deps.storage,
         &Votes {
@@ -130,32 +125,32 @@ pub fn receive_message_evm(
     Ok(Response::new().add_attribute("method", "receive_message_evm"))
 }
 
+fn hex_strings_to_byte_arrays(hex_strings: Vec<String>) -> Result<Vec<Vec<u8>>, hex::FromHexError> {
+    let mut byte_arrays = Vec::new();
+    for hex_string in hex_strings {
+        let decoded = hex::decode(&hex_string)?;
+        byte_arrays.push(decoded);
+    }
+    Ok(byte_arrays)
+}
+
 #[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetKeys {} => to_binary(&query_keys(deps)?),
 
-        QueryMsg::GetStoredVotes {
-            public_key,
-            ciphertexts,
-        } => to_binary(&get_stored_votes(deps, public_key, ciphertexts)?),
+        QueryMsg::GetStoredVotes { public_key } => to_binary(&get_stored_votes(deps, public_key)?),
     }
 }
 
-pub fn get_stored_votes(
-    deps: Deps,
-    public_key: Vec<u8>,
-    ciphertexts: Vec<Vec<u8>>,
-) -> StdResult<GetStoredVotesResp> {
+pub fn get_stored_votes(deps: Deps, public_key: Vec<u8>) -> StdResult<Vec<String>> {
     let message = ALL_VOTES.may_load(deps.storage).unwrap().unwrap();
-    let resp = GetStoredVotesResp {
-        votes: message.votes,
-    };
+
+    let ciphertexts_strings = message.votes.clone();
+    let ciphertexts = hex_strings_to_byte_arrays(ciphertexts_strings).unwrap();
 
     let my_keys = MY_KEYS.load(deps.storage)?;
-
     let my_private_key = SecretKey::from_slice(my_keys.private_key.as_slice()).unwrap();
-
     let other_public_key = PublicKey::from_slice(public_key.as_slice()).unwrap();
 
     let shared_secret = SharedSecret::new(&other_public_key, &my_private_key);
@@ -168,19 +163,22 @@ pub fn get_stored_votes(
 
     match decryption_result {
         Ok(decrypted_data_vec) => {
-            // Handle the successful decryption
+            let mut decrypted_strings = Vec::new();
             for decrypted_data in decrypted_data_vec {
-                // You can log or further process each decrypted data
-                println!("Decrypted data: {:?}", decrypted_data);
+                match String::from_utf8(decrypted_data) {
+                    Ok(decrypted_string) => decrypted_strings.push(decrypted_string),
+                    Err(e) => {
+                        return Err(StdError::generic_err(format!(
+                            "Invalid UTF-8 sequence: {:?}",
+                            e
+                        )))
+                    }
+                }
             }
+            Ok(decrypted_strings)
         }
-        Err(e) => {
-            // Log the error
-            warn!("Decryption failed with error: {:?}", e);
-        }
+        Err(e) => Err(StdError::generic_err(format!("Decryption failed: {:?}", e))),
     }
-
-    Ok(resp)
 }
 
 fn query_keys(deps: Deps) -> StdResult<KeysResponse> {
