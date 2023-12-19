@@ -3,9 +3,9 @@ const { ethers } = require("hardhat");
 const { encrypt } = require("./encrypt");
 
 async function vote() {
-  const privateVotingAddress = "0xd1feaa329E3b39f709A0f4a7212b097bb247d736"; // Replace with your deployed contract's address
+  const privateVotingAddress = "0x1A2DD5588e6eA0723874B2BDE2C0C97EE0511Cf9"; // Replace with your deployed contract's address
   const destinationChain = "secret"; // Replace with your desired destination chain
-  const destinationAddress = "secret16lmkn6y4r5c28m37teptqa3xl3mtvmyktdru4y"; // Replace with your desired destination address
+  const destinationAddress = "secret1u58qtud4tdmcwh85j8vlxxkfknjcqyhq9292hw"; // Replace with your desired destination address
 
   let msg = {
     proposalId: "5",

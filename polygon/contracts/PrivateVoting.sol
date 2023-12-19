@@ -10,6 +10,11 @@ contract PrivateVoting is AxelarExecutable {
     using StringToAddress for string;
     using AddressToString for address;
 
+event ProposalCreated(uint indexed proposalId, string name, string description);
+event Voted(uint indexed proposalId, address indexed voter, string encryptedVote);
+event VotingClosed(uint indexed proposalId);
+
+
     IAxelarGasService public immutable gasService;
     string public chainName; // name of the chain this contract is deployed to
 
@@ -23,31 +28,48 @@ contract PrivateVoting is AxelarExecutable {
         nextProposalId = 1;
     }
 
-    struct Proposal {
-        uint id;
-        string name;
-        string description;
-        mapping(address => bool) hasVoted;
-    }
+  struct Proposal {
+    uint id;
+    string name;
+    string description;
+    mapping(address => bool) hasVoted;
+    uint quorum;
+    uint voteCount;
+}
 
     mapping(uint => Proposal) public proposals;
     uint public nextProposalId;
 
-      function createProposal(string memory name, string memory description) external returns (uint proposalId) {
-        proposalId = nextProposalId++;
-        Proposal storage proposal = proposals[proposalId];
-        proposal.id = proposalId;
-        proposal.name = name;
-        proposal.description = description;
+    function uintToString(uint256 value) public pure returns (string memory) {
+        return string(abi.encodePacked(value));
     }
+
+   function createProposal(string memory name, string memory description, uint quorum) external returns (uint proposalId) {
+    proposalId = nextProposalId++;
+    Proposal storage proposal = proposals[proposalId];
+    proposal.id = proposalId;
+    proposal.name = name;
+    proposal.description = description;
+    proposal.quorum = quorum;
+    emit ProposalCreated(proposalId, name, description);
+}
+
 
      function vote(uint proposalId, string calldata encryptedVote, string calldata destinationChain, string calldata destinationAddress) external payable {
-        Proposal storage proposal = proposals[proposalId];
-        require(!proposal.hasVoted[msg.sender], "Already voted");
-        proposal.hasVoted[msg.sender] = true;
+    Proposal storage proposal = proposals[proposalId];
+    require(!proposal.hasVoted[msg.sender], "Already voted");
+    require(proposal.voteCount < proposal.quorum, "Voting closed");
+emit Voted(proposalId, msg.sender, encryptedVote);
+    proposal.hasVoted[msg.sender] = true;
+    proposal.voteCount++;
 
-        send(destinationChain, destinationAddress, encryptedVote);
+    if (proposal.voteCount >= proposal.quorum) {
+       emit VotingClosed(proposalId);
     }
+
+    send(destinationChain, destinationAddress, encryptedVote);
+}
+
 
   function send(
         string calldata destinationChain,

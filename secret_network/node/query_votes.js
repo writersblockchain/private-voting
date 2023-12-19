@@ -5,6 +5,7 @@ dotenv.config({ path: "../../polygon/.env" });
 let other_public_key = process.env.MY_PUB_KEY.split(",").map((num) =>
   parseInt(num, 10)
 );
+// console.log(other_public_key);
 
 const wallet = new Wallet(process.env.MNEMONIC);
 
@@ -17,8 +18,8 @@ const secretjs = new SecretNetworkClient({
 
 // secret contract info
 let contractCodeHash =
-  "c30ef475618ce4a4f08814cf3f12939f19b5ae41e0c8483369ee89dd58a7dc34";
-let contractAddress = "secret16lmkn6y4r5c28m37teptqa3xl3mtvmyktdru4y";
+  "de106949ccfef72de656b3ae0675d334f92102561a5e3419fa69177dc310b5a3";
+let contractAddress = "secret1u58qtud4tdmcwh85j8vlxxkfknjcqyhq9292hw";
 
 let get_stored_votes = async () => {
   let query = await secretjs.query.compute.queryContract({

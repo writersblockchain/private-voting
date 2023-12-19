@@ -13,6 +13,8 @@ fn main() {
         31, 57, 171, 198, 127, 72, 175, 90, 75, 125, 221, 184,
     ];
 
+    let encrypted_data_vec = vec![encrypted_data.to_vec()];
+
     let other_public_key = [
         2, 151, 142, 171, 162, 214, 185, 135, 244, 246, 185, 98, 150, 43, 38, 243, 247, 218, 165,
         250, 199, 227, 76, 0, 171, 197, 25, 112, 59, 196, 178, 27, 245,
@@ -36,12 +38,21 @@ fn main() {
     let ad = Some(ad_data);
 
     // Decrypt
-    match aes_siv_decrypt(&encrypted_data, ad, &key) {
-        Ok(decrypted_data) => {
-            println!(
-                "Decrypted data: {:?}",
-                String::from_utf8(decrypted_data).unwrap()
-            );
+    match aes_siv_decrypt(encrypted_data_vec, ad, &key) {
+        Ok(decrypted_data_vec) => {
+            for (index, decrypted_data) in decrypted_data_vec.iter().enumerate() {
+                match String::from_utf8(decrypted_data.clone()) {
+                    Ok(decrypted_string) => {
+                        println!("Decrypted data {}: {:?}", index, decrypted_string);
+                    }
+                    Err(e) => {
+                        warn!(
+                            "Error converting decrypted data {} to string: {:?}",
+                            index, e
+                        );
+                    }
+                }
+            }
         }
         Err(e) => {
             warn!("Error decrypting data: {:?}", e);
@@ -49,30 +60,27 @@ fn main() {
     }
 }
 
-fn aes_siv_decrypt(
-    ciphertext: &[u8],
+pub fn aes_siv_decrypt(
+    ciphertexts: Vec<Vec<u8>>, // Changed to a vector of Vec<u8>
     ad: Option<&[&[u8]]>,
     key: &[u8],
-) -> Result<Vec<u8>, CryptoError> {
+) -> Result<Vec<Vec<u8>>, CryptoError> {
     let ad = ad.unwrap_or(&[&[]]);
-
     let mut cipher = Aes128Siv::new(GenericArray::clone_from_slice(key));
-    cipher.decrypt(ad, ciphertext).map_err(|e| {
-        warn!("aes_siv_decrypt error: {:?}", e);
-        CryptoError::DecryptionError
-    })
+
+    let mut decrypted_data_vec = Vec::new();
+
+    for ciphertext in ciphertexts {
+        match cipher.decrypt(ad, &ciphertext) {
+            Ok(decrypted_data) => {
+                decrypted_data_vec.push(decrypted_data);
+            }
+            Err(e) => {
+                warn!("aes_siv_decrypt error: {:?}", e);
+                return Err(CryptoError::DecryptionError);
+            }
+        }
+    }
+
+    Ok(decrypted_data_vec)
 }
-
-// fn aes_siv_encrypt(
-//     plaintext: &[u8],
-//     ad: Option<&[&[u8]]>,
-//     key: &[u8],
-// ) -> Result<Vec<u8>, CryptoError> {
-//     let ad = ad.unwrap_or(&[&[]]);
-
-//     let mut cipher = Aes128Siv::new(GenericArray::clone_from_slice(key));
-//     cipher.encrypt(ad, plaintext).map_err(|e| {
-//         warn!("aes_siv_encrypt error: {:?}", e);
-//         CryptoError::EncryptionError
-//     })
-// }
