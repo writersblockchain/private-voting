@@ -1,14 +1,15 @@
 const { fromBase64, fromHex, toUtf8 } = require("@cosmjs/encoding");
 const { ethers } = require("hardhat");
 const { encrypt } = require("./encrypt");
+require("dotenv").config();
 
 async function vote() {
-  const privateVotingAddress = "0x1A2DD5588e6eA0723874B2BDE2C0C97EE0511Cf9"; // Replace with your deployed contract's address
+  const privateVotingAddress = process.env.CONTRACT_ADDRESS; // Replace with your deployed contract's address
   const destinationChain = "secret"; // Replace with your desired destination chain
-  const destinationAddress = "secret1u58qtud4tdmcwh85j8vlxxkfknjcqyhq9292hw"; // Replace with your desired destination address
+  const destinationAddress = proocess.env.SECRET_ADDRESS; // Replace with your desired destination address
 
   let msg = {
-    proposalId: "5",
+    proposalId: "2",
     answer: "yes",
   };
   let my_encrypted_message = await encrypt(msg);
@@ -16,8 +17,8 @@ async function vote() {
   const privateVoting = await PrivateVoting.attach(privateVotingAddress);
 
   const tx = await privateVoting.vote(
-    5,
-    my_encrypted_message.toString(),
+    2,
+    my_encrypted_message,
     destinationChain,
     destinationAddress,
     {

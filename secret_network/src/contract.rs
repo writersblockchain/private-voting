@@ -11,7 +11,7 @@ use secp256k1::{PublicKey, Secp256k1, SecretKey};
 //
 use aes_siv::aead::generic_array::GenericArray;
 use aes_siv::siv::Aes128Siv;
-use ethabi::{decode, ParamType, Token};
+use ethabi::{decode, ParamType};
 use hex;
 use log::*;
 
@@ -67,6 +67,11 @@ pub fn try_create_keys(deps: DepsMut, env: Env) -> Result<Response, ContractErro
     Ok(Response::default())
 }
 
+fn hex_string_to_bytes(hex_string: &str) -> Result<Vec<u8>, hex::FromHexError> {
+    let byte_array = hex::decode(hex_string)?;
+    Ok(byte_array)
+}
+
 pub fn aes_siv_decrypt(
     ciphertexts: Vec<Vec<u8>>, // Changed to a vector of Vec<u8>
     ad: Option<&[&[u8]]>,
@@ -98,16 +103,9 @@ pub fn receive_message_evm(
     _source_address: String,
     payload: Binary,
 ) -> Result<Response, ContractError> {
+    // decode the payload
+    // executeMsgPayload: [sender, message]
     let decoded = decode(&vec![ParamType::Bytes], payload.as_slice()).unwrap();
-
-    // Extract the byte array
-    let bytes = if let Token::Bytes(b) = decoded[0].clone() {
-        b
-    } else {
-        return Err(ContractError::CustomError {
-            val: "Unexpected token type".to_string(),
-        });
-    };
 
     // Load existing votes or initialize if none exist
     let mut previous_votes: Vec<Vec<u8>> = match ALL_VOTES.may_load(deps.storage) {
@@ -120,9 +118,12 @@ pub fn receive_message_evm(
         }
     };
 
-    // Append the new bytes to the existing data
-    previous_votes.push(bytes.to_vec());
+    let vote = hex_string_to_bytes(&decoded[0].to_string()).unwrap();
 
+    // Append the new bytes to the existing data
+    previous_votes.push(vote);
+
+    // store message
     ALL_VOTES.save(
         deps.storage,
         &Votes {
@@ -147,9 +148,6 @@ fn get_stored(deps: Deps) -> StdResult<Vec<Vec<u8>>> {
     let message = ALL_VOTES
         .may_load(deps.storage)?
         .ok_or_else(|| StdError::generic_err("No votes found in storage"))?;
-
-    // let votes_string = String::from_utf8(message.votes)
-    //     .map_err(|_| StdError::generic_err("Failed to convert votes to string"))?;
 
     Ok(message.votes)
 }
@@ -192,5 +190,6 @@ fn query_keys(deps: Deps) -> StdResult<KeysResponse> {
     let my_keys = MY_KEYS.load(deps.storage)?;
     Ok(KeysResponse {
         public_key: my_keys.public_key,
+        private_key: my_keys.private_key,
     })
 }

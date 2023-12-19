@@ -12,9 +12,8 @@ const secretjs = new SecretNetworkClient({
 });
 
 // secret contract info
-let contractCodeHash =
-  "de106949ccfef72de656b3ae0675d334f92102561a5e3419fa69177dc310b5a3";
-let contractAddress = "secret1u58qtud4tdmcwh85j8vlxxkfknjcqyhq9292hw";
+let contractCodeHash = process.env.CODE_HASH;
+let contractAddress = process.env.SECRET_ADDRESS;
 let encrypted_data;
 let other_public_key = process.env.MY_PUB_KEY.split(",").map((num) =>
   parseInt(num, 10)

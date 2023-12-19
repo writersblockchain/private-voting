@@ -28,4 +28,5 @@ pub enum QueryMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct KeysResponse {
     pub public_key: Vec<u8>,
+    pub private_key: Vec<u8>,
 }

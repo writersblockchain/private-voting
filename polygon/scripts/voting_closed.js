@@ -1,8 +1,9 @@
 const fs = require("fs");
 const { ethers } = require("hardhat");
+require("dotenv").config();
 
 async function main() {
-  const contractAddress = "0x1A2DD5588e6eA0723874B2BDE2C0C97EE0511Cf9"; // Replace with your contract's address
+  const contractAddress = process.env.CONTRACT_ADDRESS; // Replace with your contract's address
   const contractName = "PrivateVoting"; // Replace with your contract's name
 
   const ContractJson = require("../artifacts/contracts/PrivateVoting.sol/PrivateVoting.json");

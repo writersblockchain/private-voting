@@ -11,7 +11,7 @@ contract PrivateVoting is AxelarExecutable {
     using AddressToString for address;
 
 event ProposalCreated(uint indexed proposalId, string name, string description);
-event Voted(uint indexed proposalId, address indexed voter, string encryptedVote);
+event Voted(uint indexed proposalId, address indexed voter, bytes encryptedVote);
 event VotingClosed(uint indexed proposalId);
 
 
@@ -55,7 +55,7 @@ event VotingClosed(uint indexed proposalId);
 }
 
 
-     function vote(uint proposalId, string calldata encryptedVote, string calldata destinationChain, string calldata destinationAddress) external payable {
+     function vote(uint proposalId, bytes calldata encryptedVote, string calldata destinationChain, string calldata destinationAddress) external payable {
     Proposal storage proposal = proposals[proposalId];
     require(!proposal.hasVoted[msg.sender], "Already voted");
     require(proposal.voteCount < proposal.quorum, "Voting closed");
@@ -74,7 +74,7 @@ emit Voted(proposalId, msg.sender, encryptedVote);
   function send(
         string calldata destinationChain,
         string calldata destinationAddress,
-        string calldata encryptedVote
+        bytes calldata encryptedVote
     ) public payable {
         // 1. Generate GMP payload
         bytes memory executeMsgPayload = abi.encode(encryptedVote);
