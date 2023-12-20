@@ -1,7 +1,6 @@
 import { SecretNetworkClient, Wallet } from "secretjs";
 import dotenv from "dotenv";
 dotenv.config({ path: "../../polygon/.env" });
-import util from "util";
 
 const wallet = new Wallet(process.env.MNEMONIC);
 
@@ -24,7 +23,7 @@ let get_stored = async () => {
     code_hash: contractCodeHash,
   });
 
-  console.log(util.inspect(query, { maxArrayLength: null }));
+  console.log(query);
 };
 
 get_stored();

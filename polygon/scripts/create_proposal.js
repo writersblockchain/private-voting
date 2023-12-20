@@ -9,8 +9,8 @@ async function create_proposal() {
   const privateVoting = await PrivateVoting.attach(privateVotingAddress);
 
   const tx = await privateVoting.createProposal(
-    "Proposal # 2",
-    "Do you like turtles? - Yes or No?",
+    "Proposal # 3",
+    "Do you like baseball? - Yes or No?",
     2
   );
 
