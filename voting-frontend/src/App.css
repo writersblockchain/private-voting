@@ -1,38 +1,92 @@
-.App {
+h1 {
+  margin: 0;
+  display: block;
+  font-size: 2em;
+  font-weight: bold;
+}
+
+input[type="text"] {
+  background-color: #2a2a2a; /* Dark background for the input */
+  border: 1px solid #2a9d8f; /* Teal border */
+  color: white; /* White text color */
+  padding: 10px;
+  margin-top: 5px; /* Spacing above the input field */
+  margin-bottom: 15px; /* Spacing below the input field */
+  width: 80%; /* Adjust width as necessary */
+  border-radius: 5px; /* Slight rounding of corners */
+  font-size: 16px;
+  font-family: "Montserrat", sans-serif; /* Montserrat font */
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border: 1px solid #48b9a7; /* Lighter teal for focus */
+  box-shadow: 0 0 8px 0 #48b9a7; /* Subtle glow effect on focus */
+}
+
+button {
+  background: linear-gradient(
+    145deg,
+    #2a9d8f,
+    #2f7a78
+  ); /* Gradient background */
+  border: none;
+  color: white;
+  padding: 10px 25px;
   text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  font-family: "Montserrat", sans-serif; /* Montserrat font */
+  margin: 4px 2px;
+  transition: background-color 0.3s ease; /* Smooth transition for background color */
+  cursor: pointer;
+  border-radius: 25px; /* Fully rounded borders for a pill shape */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+  text-transform: uppercase; /* Capitalize button text */
+  font-weight: bold; /* Bold font weight */
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+button:hover {
+  background: linear-gradient(
+    155deg,
+    #3cba96,
+    #2f7a78
+  ); /* Slightly altered gradient for hover */
+  box-shadow: 0 5px 9px rgba(0, 0, 0, 0.3); /* Slightly larger shadow for hover effect */
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.App {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  text-align: center;
+  background-color: #0a0a0a;
+  color: #ffffff;
+  height: 100vh;
+  padding-top: 40px;
+}
+
+.header {
+  background-color: black;
   color: white;
+  padding: 20px;
+  text-transform: uppercase;
 }
 
-.App-link {
-  color: #61dafb;
+.columns {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1000px;
+  height: 100vh;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.column {
+  flex: 1;
+  padding: 20px;
+  margin: 10px;
+  border: 2px solid white;
+  border-radius: 10px;
+  background-color: #1a1a1a;
 }
