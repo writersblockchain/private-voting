@@ -53,9 +53,13 @@ function App() {
           <ul style={{ listStyleType: "none", padding: 0 }}>
             {proposals.map((proposal, index) => (
               <li key={index}>
-                {proposal} -{" "}
-                <button onClick={() => handleVote(proposal, "yes")}>Yes</button>{" "}
-                <button onClick={() => handleVote(proposal, "no")}>No</button>
+                <span className="proposal-text">{proposal}</span>
+                <div className="vote-buttons">
+                  <button onClick={() => handleVote(proposal, "yes")}>
+                    Yes
+                  </button>
+                  <button onClick={() => handleVote(proposal, "no")}>No</button>
+                </div>
               </li>
             ))}
           </ul>
