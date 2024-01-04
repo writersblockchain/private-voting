@@ -1,19 +1,29 @@
 import React, { useState } from "react";
+import ConnectWallet from "./components/connectWallet";
 import "./App.css";
 
 function App() {
   const [proposalName, setProposalName] = useState("");
+  const [quorum, setQuorum] = useState(""); // State to store quorum value
   const [proposals, setProposals] = useState([]); // To store submitted proposals
   const [votes, setVotes] = useState({}); // To store votes for each proposal
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Add the proposal name to the list of proposals
-    setProposals([...proposals, proposalName]);
+    const newProposal = {
+      name: proposalName,
+      quorum: parseInt(quorum, 10), // Parse quorum input as an integer
+    };
+    // Add the new proposal to the list of proposals
+    setProposals([...proposals, newProposal]);
     // Initialize the votes for this proposal
-    setVotes({ ...votes, [proposalName]: { yes: 0, no: 0 } });
-    // Clear the input field after submission
+    setVotes({
+      ...votes,
+      [proposalName]: { yes: 0, no: 0, quorum: parseInt(quorum, 10) },
+    });
+    // Clear the input fields after submission
     setProposalName("");
+    setQuorum(""); // Clear the quorum input field
   };
 
   const handleVote = (proposal, vote) => {
@@ -29,6 +39,7 @@ function App() {
 
   return (
     <div className="App">
+      <ConnectWallet />
       <div className="header">
         <h1>Private Voting on Secret Network</h1>
       </div>
@@ -43,6 +54,16 @@ function App() {
                 type="text"
                 value={proposalName}
                 onChange={(e) => setProposalName(e.target.value)}
+              />
+            </label>
+            <label>
+              Quorum (required number of votes):
+              <br />
+              <input
+                type="number" // Specify input type as number
+                value={quorum}
+                onChange={(e) => setQuorum(e.target.value)}
+                min="0" // Minimum value set to 0
               />
             </label>
             <button type="submit">Submit Proposal</button>

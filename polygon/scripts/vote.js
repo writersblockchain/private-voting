@@ -10,7 +10,7 @@ async function vote() {
 
   let msg = {
     proposalId: "3",
-    answer: "no way!",
+    answer: "yes",
   };
   let my_encrypted_message = await encrypt(msg);
   let PrivateVoting = await hre.ethers.getContractFactory("PrivateVoting");
