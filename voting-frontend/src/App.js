@@ -50,19 +50,23 @@ function App() {
         </div>
         <div className="column">
           <h2>Existing Proposals</h2>
-          <ul style={{ listStyleType: "none", padding: 0 }}>
-            {proposals.map((proposal, index) => (
-              <li key={index}>
-                <span className="proposal-text">{proposal}</span>
-                <div className="vote-buttons">
-                  <button onClick={() => handleVote(proposal, "yes")}>
-                    Yes
-                  </button>
-                  <button onClick={() => handleVote(proposal, "no")}>No</button>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div className="proposal-list">
+            <ul style={{ listStyleType: "none", padding: 0 }}>
+              {proposals.map((proposal, index) => (
+                <li key={index}>
+                  <span className="proposal-text">{proposal}</span>
+                  <div className="vote-buttons">
+                    <button onClick={() => handleVote(proposal, "yes")}>
+                      Yes
+                    </button>
+                    <button onClick={() => handleVote(proposal, "no")}>
+                      No
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
         <div className="column">
           <h2>Proposal Results</h2>

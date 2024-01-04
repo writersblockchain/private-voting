@@ -1,111 +1,191 @@
-h1 {
-  margin: 0;
-  display: block;
-  font-size: 2em;
-  font-weight: bold;
-}
-
-input[type="text"] {
-  background-color: #2a2a2a; /* Dark background for the input */
-  border: 1px solid #2a9d8f; /* Teal border */
-  color: white; /* White text color */
-  padding: 10px;
-  margin-top: 5px; /* Spacing above the input field */
-  margin-bottom: 15px; /* Spacing below the input field */
-  width: 80%; /* Adjust width as necessary */
-  border-radius: 5px; /* Slight rounding of corners */
-  font-size: 16px;
-  font-family: "Montserrat", sans-serif; /* Montserrat font */
-}
-
-input[type="text"]:focus {
-  outline: none;
-  border: 1px solid #48b9a7; /* Lighter teal for focus */
-  box-shadow: 0 0 8px 0 #48b9a7; /* Subtle glow effect on focus */
-}
-
-button {
-  background: linear-gradient(
-    145deg,
-    #2a9d8f,
-    #2f7a78
-  ); /* Gradient background */
-  border: none;
-  color: white;
-  padding: 10px 25px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  font-family: "Montserrat", sans-serif;
-  margin: 4px 2px;
-  transition: background-color 0.3s ease;
-  cursor: pointer;
-  border-radius: 25px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
-  text-transform: uppercase; /* Capitalize button text */
-  font-weight: bold;
-}
-
-button:hover {
-  background: linear-gradient(
-    155deg,
-    #3cba96,
-    #2f7a78
-  ); /* Slightly altered gradient for hover */
-  box-shadow: 0 5px 9px rgba(0, 0, 0, 0.3); /* Slightly larger shadow for hover effect */
-}
-
+/* Base settings */
+body,
+input,
+button,
+h1,
+h2,
+h3,
 li {
-  display: flex;
-  flex-direction: column; /* Stack items vertically */
-  align-items: center; /* Center items horizontally */
-  text-align: center; /* Center text */
-  margin-bottom: 20px;
+  font-family: "Montserrat", sans-serif;
+  color: white;
 }
 
-.proposal-text {
-  text-align: left; /* Align the text to the left */
-  margin-bottom: 5px; /* Space between proposal text and buttons */
+/* Reset margin and padding for consistent cross-browser behavior */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.vote-buttons {
-  display: flex;
-  justify-content: center; /* Center buttons horizontally */
-  margin-top: 5px; /* Add some space between the proposal text and the buttons */
-}
-
+/* App container */
 .App {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   background-color: #0a0a0a;
-  color: #ffffff;
-  height: 100vh;
+  min-height: 100vh;
+  width: 100vw;
+  overflow: hidden;
   padding-top: 40px;
 }
 
+/* Header styles */
 .header {
   background-color: black;
-  color: white;
   padding: 20px;
   text-transform: uppercase;
 }
 
+/* Columns container */
 .columns {
   display: flex;
   justify-content: space-between;
   width: 100%;
   max-width: 1000px;
-  height: 100vh;
+  height: calc(100vh - 80px);
+  margin-top: 20px;
+  overflow: hidden;
 }
 
+/* Individual column styling */
 .column {
   flex: 1;
-  padding: 20px;
   margin: 10px;
+  padding: 20px;
+  background-color: #1a1a1a;
   border: 2px solid white;
   border-radius: 10px;
-  background-color: #1a1a1a;
+  overflow: hidden;
+}
+
+/* Proposal list with custom scrollbar */
+.proposal-list {
+  max-height: calc(100% - 40px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #ffffff #2a2a2a;
+  padding: 0 20px;
+}
+
+/* Webkit scrollbar styles */
+.proposal-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.proposal-list::-webkit-scrollbar-track {
+  background: #2a2a2a;
+}
+
+.proposal-list::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border-radius: 5px;
+}
+
+/* Text input styles */
+input[type="text"] {
+  background-color: #2a2a2a;
+  border: 1px solid #2a9d8f;
+  padding: 10px;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  width: 80%;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border: 1px solid #48b9a7;
+  box-shadow: 0 0 8px 0 #48b9a7;
+}
+
+/* Button styles */
+button {
+  background: linear-gradient(145deg, #2a9d8f, #2f7a78);
+  border: none;
+  padding: 10px 25px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  transition: background-color 0.3s ease;
+  cursor: pointer;
+  border-radius: 25px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+button:hover {
+  background: linear-gradient(155deg, #3cba96, #2f7a78);
+  box-shadow: 0 5px 9px rgba(0, 0, 0, 0.3);
+}
+
+/* List item styles */
+li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Text styles */
+h1 {
+  font-size: 2em;
+  font-weight: bold;
+  margin-bottom: 40px;
+}
+
+.proposal-text {
+  text-align: left;
+  margin-bottom: 5px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+/* Vote button container */
+.vote-buttons {
+  display: flex;
+  justify-content: center;
+  margin-top: 5px;
+}
+
+/* Media queries for mobile optimization */
+@media (max-width: 768px) {
+  .columns {
+    flex-direction: column;
+    height: auto;
+    margin-top: 10px;
+  }
+
+  .column {
+    width: 100%;
+    margin: 10px 0;
+    padding: 15px;
+    max-width: none;
+  }
+
+  input[type="text"],
+  button {
+    width: 90%; /* Increase touch target size */
+    margin-top: 10px;
+    padding: 12px; /* Increase padding for better touch interaction */
+  }
+
+  h1 {
+    font-size: 1.5em; /* Adjust font size for smaller screens */
+  }
+
+  .proposal-list {
+    max-height: 300px; /* Adjust the height of the scrollable list */
+    padding: 0 10px;
+  }
+
+  .proposal-list::-webkit-scrollbar {
+    width: 8px; /* Make scrollbar thinner on mobile */
+  }
 }
