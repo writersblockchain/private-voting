@@ -19,27 +19,18 @@ let other_public_key = process.env.MY_PUB_KEY.split(",").map((num) =>
   parseInt(num, 10)
 );
 
-let get_stored_votes = async () => {
+let get_decrypted_query = async () => {
   let query = await secretjs.query.compute.queryContract({
     contract_address: contractAddress,
     query: {
-      get_stored_votes: {},
-    },
-    code_hash: contractCodeHash,
-  });
-
-  query.votes.forEach((voteStr) => {
-    let array = voteStr.split(",").map(Number);
-    return array;
-  });
-};
-get_stored_votes();
-
-let get_decrypted = async () => {
-  let query = await secretjs.query.compute.queryContract({
-    contract_address: contractAddress,
-    query: {
-      get_decrypted: {},
+      decrypt_query: {
+        public_key: other_public_key,
+        encrypted_message: [
+          170, 178, 174, 57, 214, 52, 175, 237, 211, 140, 68, 7, 3, 157, 202,
+          209, 150, 177, 232, 250, 86, 186, 178, 60, 78, 252, 133, 201, 78, 234,
+          208, 105,
+        ],
+      },
     },
     code_hash: contractCodeHash,
   });
@@ -47,27 +38,4 @@ let get_decrypted = async () => {
   console.log(query);
 };
 
-// decrypt the stored encrypted data sent from EVM
-let try_decrypt = async () => {
-  let encrypted_data = await get_stored_votes();
-  const tx = await secretjs.tx.compute
-    .executeContract(
-      {
-        sender: wallet.address,
-        contract_address: contractAddress,
-        msg: {
-          try_decrypt: {
-            ciphertext: encrypted_data,
-            public_key: other_public_key,
-          },
-        },
-        code_hash: contractCodeHash,
-      },
-      { gasLimit: 100_000 }
-    )
-    .then((tx) => {
-      console.log(tx);
-      get_decrypted();
-    });
-};
-// try_decrypt();
+get_decrypted_query();
