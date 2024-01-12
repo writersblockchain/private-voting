@@ -53,11 +53,9 @@ let final_tally = async () => {
     return { yes_tally, no_tally };
   };
 
-  const tallies = await get_decrypted_votes_for_proposal();
-
-  await try_tally_votes(proposalId, tallies.yes_tally, tallies.no_tally);
-
-  await get_tallied_votes(proposalId);
+  // const tallies = await get_decrypted_votes_for_proposal();
 };
 
-final_tally();
+// try_tally_votes(5, 2, 4);
+
+// get_tallied_votes(5);

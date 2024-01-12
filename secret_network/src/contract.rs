@@ -93,8 +93,18 @@ pub fn try_tally(
         },
     };
 
-    // Add the new vote results
-    all_vote_results.all_vote_results.push(vote_results);
+    // Check if an entry with the given proposal_id already exists
+    if let Some(existing_vote_result) = all_vote_results
+        .all_vote_results
+        .iter_mut()
+        .find(|vr| vr.proposal_id == proposal_id)
+    {
+        // Update the existing entry
+        existing_vote_result.final_result = result.to_string();
+    } else {
+        // Add the new vote results if it doesn't exist
+        all_vote_results.all_vote_results.push(vote_results);
+    }
 
     // Save the updated AllVoteResults back to storage
     ALL_VOTE_RESULTS.save(deps.storage, &all_vote_results)?;
