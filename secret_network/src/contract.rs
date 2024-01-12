@@ -1,6 +1,6 @@
 use crate::error::{ContractError, CryptoError};
-use crate::msg::{ExecuteMsg, InstantiateMsg, KeysResponse, QueryMsg};
-use crate::state::{MyKeys, MY_KEYS};
+use crate::msg::{ExecuteMsg, InstantiateMsg, KeysResponse, QueryMsg, VotesResponse};
+use crate::state::{AllVoteResults, MyKeys, VoteResults, ALL_VOTE_RESULTS, MY_KEYS};
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
 };
@@ -36,6 +36,11 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::CreateKeys {} => try_create_keys(deps, env),
+        ExecuteMsg::Tally {
+            proposal_id,
+            yes_votes,
+            no_votes,
+        } => try_tally(deps, env, proposal_id, yes_votes, no_votes),
     }
 }
 
@@ -60,7 +65,40 @@ pub fn try_create_keys(deps: DepsMut, env: Env) -> Result<Response, ContractErro
     Ok(Response::default())
 }
 
-pub fn try_decrypt_tally(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
+pub fn try_tally(
+    deps: DepsMut,
+    _env: Env,
+    proposal_id: u8,
+    yes_votes: u8,
+    no_votes: u8,
+) -> Result<Response, ContractError> {
+    let result = if yes_votes > no_votes {
+        "yes"
+    } else if yes_votes < no_votes {
+        "no"
+    } else {
+        "tie"
+    };
+
+    let vote_results = VoteResults {
+        proposal_id,
+        final_result: result.to_string(),
+    };
+
+    // Attempt to load AllVoteResults, initialize if not present
+    let mut all_vote_results = match ALL_VOTE_RESULTS.load(deps.storage) {
+        Ok(results) => results,
+        Err(_) => AllVoteResults {
+            all_vote_results: Vec::new(),
+        },
+    };
+
+    // Add the new vote results
+    all_vote_results.all_vote_results.push(vote_results);
+
+    // Save the updated AllVoteResults back to storage
+    ALL_VOTE_RESULTS.save(deps.storage, &all_vote_results)?;
+
     Ok(Response::default())
 }
 
@@ -82,7 +120,9 @@ pub fn aes_siv_decrypt(
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetKeys {} => to_binary(&query_keys(deps)?),
-
+        QueryMsg::GetVoteResults { proposal_id } => {
+            to_binary(&query_vote_results(deps, proposal_id)?)
+        }
         QueryMsg::DecryptQuery {
             public_key,
             encrypted_message,
@@ -122,4 +162,17 @@ fn query_keys(deps: Deps) -> StdResult<KeysResponse> {
         public_key: my_keys.public_key,
         private_key: my_keys.private_key,
     })
+}
+
+fn query_vote_results(deps: Deps, proposal_id: u8) -> StdResult<VotesResponse> {
+    let all_vote_results = ALL_VOTE_RESULTS.load(deps.storage)?;
+    all_vote_results
+        .all_vote_results
+        .iter()
+        .find(|&x| x.proposal_id == proposal_id)
+        .map(|x| VotesResponse {
+            final_result: x.final_result.clone(),
+            proposal_id: x.proposal_id,
+        })
+        .ok_or_else(|| StdError::generic_err("No vote results found"))
 }

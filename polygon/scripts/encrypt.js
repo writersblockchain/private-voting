@@ -7,8 +7,8 @@ let provider = new miscreant.PolyfillCryptoProvider();
 let ciphertext;
 
 let secret_pubKey = new Uint8Array([
-  3, 72, 213, 123, 243, 59, 106, 208, 127, 43, 138, 37, 101, 253, 241, 232, 247,
-  104, 241, 140, 180, 132, 150, 173, 225, 85, 52, 29, 99, 93, 104, 25, 16,
+  2, 164, 48, 161, 217, 235, 135, 238, 35, 147, 95, 95, 61, 247, 68, 212, 63,
+  205, 107, 57, 40, 78, 225, 47, 253, 109, 196, 77, 93, 154, 35, 176, 241,
 ]);
 
 let privateKey = dotenv.config().parsed.MY_PRIV_KEY;

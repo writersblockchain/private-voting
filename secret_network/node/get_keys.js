@@ -1,5 +1,5 @@
-import { SecretNetworkClient, Wallet } from "secretjs";
-import dotenv from "dotenv";
+const { SecretNetworkClient, Wallet } = require("secretjs");
+const dotenv = require("dotenv");
 dotenv.config({ path: "../../polygon/.env" });
 
 const wallet = new Wallet(process.env.MNEMONIC);
