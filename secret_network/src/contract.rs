@@ -60,6 +60,10 @@ pub fn try_create_keys(deps: DepsMut, env: Env) -> Result<Response, ContractErro
     Ok(Response::default())
 }
 
+pub fn try_decrypt_tally(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
+    Ok(Response::default())
+}
+
 pub fn aes_siv_decrypt(
     ciphertext: &[u8],
     ad: Option<&[&[u8]]>,
