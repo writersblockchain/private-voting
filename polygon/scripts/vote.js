@@ -5,30 +5,20 @@ require("dotenv").config();
 
 async function vote() {
   const privateVotingAddress = process.env.CONTRACT_ADDRESS; // Replace with your deployed contract's address
-  const destinationChain = "secret"; // Replace with your desired destination chain
-  const destinationAddress = process.env.SECRET_ADDRESS; // Replace with your desired destination address
 
   let msg = {
-    proposalId: "3",
-    answer: "no way!",
+    answer: "yes",
+    salt: Math.random(),
   };
   let my_encrypted_message = await encrypt(msg);
   let PrivateVoting = await hre.ethers.getContractFactory("PrivateVoting");
   const privateVoting = await PrivateVoting.attach(privateVotingAddress);
 
-  const tx = await privateVoting.vote(
-    3,
-    my_encrypted_message,
-    destinationChain,
-    destinationAddress,
-    {
-      value: ethers.utils.parseEther("0.38"), // Adjust the amount as needed for gas
-    }
-  );
+  const tx = await privateVoting.vote(7, my_encrypted_message);
 
   console.log(`Transaction hash: ${tx.hash}`);
   await tx.wait();
 
-  console.log("send function executed successfully!");
+  console.log("vote function executed successfully!");
 }
 vote();

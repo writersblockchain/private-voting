@@ -2,7 +2,7 @@ const fs = require("fs");
 const { ethers } = require("hardhat");
 require("dotenv").config();
 
-async function main() {
+async function queryVotes(proposalId) {
   const contractAddress = process.env.CONTRACT_ADDRESS;
   const contractName = "PrivateVoting"; // Replace with your contract's name
 
@@ -13,18 +13,18 @@ async function main() {
   const provider = ethers.provider;
   const contract = new ethers.Contract(contractAddress, abi, provider);
 
-  // Query the number of proposals
-  const nextProposalId = await contract.nextProposalId();
-  // console.log(`Total Proposals: ${nextProposalId.toNumber()}`);
-
-  // Iterate over all proposals
-  for (let i = 1; i < nextProposalId; i++) {
-    const proposal = await contract.proposals(i);
-    console.log(`Proposal:`, proposal);
+  try {
+    const votes = await contract.getVotes(proposalId);
+    console.log(votes);
+    return votes;
+  } catch (error) {
+    console.error(`Error fetching votes for proposal ${proposalId}:`, error);
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+// queryVotes(7);
+
+// Export the queryVotes function
+module.exports = {
+  queryVotes,
+};

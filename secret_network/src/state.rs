@@ -9,10 +9,10 @@ pub struct MyKeys {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Votes {
-    pub votes: Vec<Vec<u8>>,
+pub struct VoteResults {
+    pub final_result: String,
 }
 
-pub static MY_KEYS: Item<MyKeys> = Item::new(b"my_keys");
+pub static VOTE_RESULTS: Item<VoteResults> = Item::new(b"vote_results");
 
-pub static ALL_VOTES: Item<Votes> = Item::new(b"all votes");
+pub static MY_KEYS: Item<MyKeys> = Item::new(b"my_keys");

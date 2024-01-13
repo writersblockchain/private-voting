@@ -1,4 +1,3 @@
-use cosmwasm_std::Binary;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -9,10 +8,10 @@ pub struct InstantiateMsg {}
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     CreateKeys {},
-    ReceiveMessageEvm {
-        source_chain: String,
-        source_address: String,
-        payload: Binary,
+
+    DecryptTally {
+        public_key: Vec<u8>,
+        encrypted_message: Vec<String>,
     },
 }
 
@@ -20,8 +19,7 @@ pub enum ExecuteMsg {
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     GetKeys {},
-    GetStoredVotes { public_key: Vec<u8> },
-    GetStored {},
+    GetResults {},
 }
 
 // We define a custom struct for each query response
@@ -29,4 +27,10 @@ pub enum QueryMsg {
 pub struct KeysResponse {
     pub public_key: Vec<u8>,
     pub private_key: Vec<u8>,
+}
+
+// We define a custom struct for each query response
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct VotesResponse {
+    pub final_result: String,
 }

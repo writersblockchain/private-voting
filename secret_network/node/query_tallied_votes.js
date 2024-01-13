@@ -1,11 +1,6 @@
-import { SecretNetworkClient, Wallet } from "secretjs";
-import dotenv from "dotenv";
+const { SecretNetworkClient, Wallet } = require("secretjs");
+const dotenv = require("dotenv");
 dotenv.config({ path: "../../polygon/.env" });
-
-let other_public_key = process.env.MY_PUB_KEY.split(",").map((num) =>
-  parseInt(num, 10)
-);
-// console.log(other_public_key);
 
 const wallet = new Wallet(process.env.MNEMONIC);
 
@@ -20,13 +15,11 @@ const secretjs = new SecretNetworkClient({
 let contractCodeHash = process.env.CODE_HASH;
 let contractAddress = process.env.SECRET_ADDRESS;
 
-let get_stored_votes = async () => {
+let query_tallied_votes = async () => {
   let query = await secretjs.query.compute.queryContract({
     contract_address: contractAddress,
     query: {
-      get_stored_votes: {
-        public_key: other_public_key,
-      },
+      get_results: {},
     },
     code_hash: contractCodeHash,
   });
@@ -34,4 +27,8 @@ let get_stored_votes = async () => {
   console.log(query);
 };
 
-get_stored_votes();
+query_tallied_votes();
+
+module.exports = {
+  query_tallied_votes,
+};

@@ -1,6 +1,6 @@
 use crate::error::{ContractError, CryptoError};
-use crate::msg::{ExecuteMsg, InstantiateMsg, KeysResponse, QueryMsg};
-use crate::state::{MyKeys, Votes, ALL_VOTES, MY_KEYS};
+use crate::msg::{ExecuteMsg, InstantiateMsg, KeysResponse, QueryMsg, VotesResponse};
+use crate::state::{MyKeys, VoteResults, MY_KEYS, VOTE_RESULTS};
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
 };
@@ -11,7 +11,6 @@ use secp256k1::{PublicKey, Secp256k1, SecretKey};
 //
 use aes_siv::aead::generic_array::GenericArray;
 use aes_siv::siv::Aes128Siv;
-use ethabi::{decode, ParamType};
 use hex;
 use log::*;
 
@@ -38,11 +37,10 @@ pub fn execute(
     match msg {
         ExecuteMsg::CreateKeys {} => try_create_keys(deps, env),
 
-        ExecuteMsg::ReceiveMessageEvm {
-            source_chain,
-            source_address,
-            payload,
-        } => receive_message_evm(deps, source_chain, source_address, payload),
+        ExecuteMsg::DecryptTally {
+            public_key,
+            encrypted_message,
+        } => try_decrypt_tally(deps, env, public_key, encrypted_message),
     }
 }
 
@@ -67,9 +65,53 @@ pub fn try_create_keys(deps: DepsMut, env: Env) -> Result<Response, ContractErro
     Ok(Response::default())
 }
 
-fn hex_string_to_bytes(hex_string: &str) -> Result<Vec<u8>, hex::FromHexError> {
-    let byte_array = hex::decode(hex_string)?;
-    Ok(byte_array)
+pub fn try_decrypt_tally(
+    deps: DepsMut,
+    _env: Env,
+    public_key: Vec<u8>,
+    encrypted_message: Vec<String>,
+) -> Result<Response, ContractError> {
+    let my_keys = MY_KEYS.load(deps.storage)?;
+
+    let my_private_key = SecretKey::from_slice(&my_keys.private_key)
+        .map_err(|_| StdError::generic_err("Invalid private key"))?;
+
+    let other_public_key = PublicKey::from_slice(&public_key)
+        .map_err(|_| StdError::generic_err("Invalid public key"))?;
+
+    let shared_secret = SharedSecret::new(&other_public_key, &my_private_key);
+    let key = shared_secret.to_vec();
+
+    let ad_data: &[&[u8]] = &[];
+    let ad = Some(ad_data);
+
+    //convert hex strings to Vec<u8> for decryption function
+    let encrypted_message_vecs = hex_to_vec(&encrypted_message);
+
+    // Decrypt the data
+    let decrypted_data_vec = aes_siv_decrypt(encrypted_message_vecs, ad, &key)
+        .map_err(|e| StdError::generic_err(format!("Error decrypting data: {:?}", e)))?;
+
+    //push decrypted strings into a Vec
+    let mut decrypted_strings = Vec::new();
+    for decrypted_data in decrypted_data_vec {
+        let decrypted_string = String::from_utf8(decrypted_data).map_err(|e| {
+            StdError::generic_err(format!("Error converting data to string: {:?}", e))
+        })?;
+        decrypted_strings.push(decrypted_string);
+    }
+
+    // Tally the votes
+    let final_result = tally_answers(decrypted_strings);
+
+    // Save the results
+    let vote_results = VoteResults {
+        final_result: final_result.clone(),
+    };
+
+    VOTE_RESULTS.save(deps.storage, &vote_results)?;
+
+    Ok(Response::default())
 }
 
 pub fn aes_siv_decrypt(
@@ -97,93 +139,51 @@ pub fn aes_siv_decrypt(
     Ok(decrypted_data_vec)
 }
 
-pub fn receive_message_evm(
-    deps: DepsMut,
-    _source_chain: String,
-    _source_address: String,
-    payload: Binary,
-) -> Result<Response, ContractError> {
-    // decode the payload
-    // executeMsgPayload: [sender, message]
-    let decoded = decode(&vec![ParamType::Bytes], payload.as_slice()).unwrap();
+fn hex_to_vec(hex_vec: &[String]) -> Vec<Vec<u8>> {
+    hex_vec
+        .iter()
+        .map(|hex| {
+            hex.trim_start_matches("0x")
+                .chars()
+                .collect::<Vec<char>>()
+                .chunks(2)
+                .filter_map(|chunk| {
+                    let hex_byte = chunk.iter().collect::<String>();
+                    u8::from_str_radix(&hex_byte, 16).ok()
+                })
+                .collect::<Vec<u8>>()
+        })
+        .collect()
+}
 
-    // Load existing votes or initialize if none exist
-    let mut previous_votes: Vec<Vec<u8>> = match ALL_VOTES.may_load(deps.storage) {
-        Ok(Some(votes_data)) => votes_data.votes,
-        Ok(None) => Vec::new(),
-        Err(_) => {
-            return Err(ContractError::CustomError {
-                val: "loading error".to_string(),
-            })
+fn tally_answers(data: Vec<String>) -> String {
+    let mut yes_count = 0;
+    let mut no_count = 0;
+
+    for item in data {
+        if item.contains("yes") {
+            yes_count += 1;
+        } else if item.contains("no") {
+            no_count += 1;
         }
-    };
+        // Ignore any strings that don't match
+    }
 
-    let vote = hex_string_to_bytes(&decoded[0].to_string()).unwrap();
-
-    // Append the new bytes to the existing data
-    previous_votes.push(vote);
-
-    // store message
-    ALL_VOTES.save(
-        deps.storage,
-        &Votes {
-            votes: previous_votes,
-        },
-    )?;
-
-    Ok(Response::new())
+    if yes_count > no_count {
+        "yes".to_string()
+    } else if no_count > yes_count {
+        "no".to_string()
+    } else {
+        "tie".to_string()
+    }
 }
 
 #[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetKeys {} => to_binary(&query_keys(deps)?),
-
-        QueryMsg::GetStoredVotes { public_key } => to_binary(&get_stored_votes(deps, public_key)?),
-        QueryMsg::GetStored {} => to_binary(&get_stored(deps)?),
+        QueryMsg::GetResults {} => to_binary(&query_results(deps)?),
     }
-}
-
-fn get_stored(deps: Deps) -> StdResult<Vec<Vec<u8>>> {
-    let message = ALL_VOTES
-        .may_load(deps.storage)?
-        .ok_or_else(|| StdError::generic_err("No votes found in storage"))?;
-
-    Ok(message.votes)
-}
-
-pub fn get_stored_votes(deps: Deps, public_key: Vec<u8>) -> StdResult<Vec<String>> {
-    let message = ALL_VOTES
-        .may_load(deps.storage)?
-        .ok_or_else(|| StdError::generic_err("No votes found in storage"))?;
-
-    let ciphertexts = message.votes;
-
-    let my_keys = MY_KEYS.load(deps.storage)?;
-    let my_private_key = SecretKey::from_slice(&my_keys.private_key)
-        .map_err(|_| StdError::generic_err("Invalid private key"))?;
-    let other_public_key = PublicKey::from_slice(&public_key)
-        .map_err(|_| StdError::generic_err("Invalid public key"))?;
-
-    let shared_secret = SharedSecret::new(&other_public_key, &my_private_key);
-    let key = shared_secret.to_vec();
-
-    let ad_data: &[&[u8]] = &[];
-    let ad = Some(ad_data);
-
-    // Decrypt
-    let decrypted_data_vec = aes_siv_decrypt(ciphertexts, ad, &key)
-        .map_err(|e| StdError::generic_err(format!("Error decrypting data: {:?}", e)))?;
-
-    let mut decrypted_strings = Vec::new();
-    for decrypted_data in decrypted_data_vec {
-        let decrypted_string = String::from_utf8(decrypted_data).map_err(|e| {
-            StdError::generic_err(format!("Error converting data to string: {:?}", e))
-        })?;
-        decrypted_strings.push(decrypted_string);
-    }
-
-    Ok(decrypted_strings)
 }
 
 fn query_keys(deps: Deps) -> StdResult<KeysResponse> {
@@ -191,5 +191,12 @@ fn query_keys(deps: Deps) -> StdResult<KeysResponse> {
     Ok(KeysResponse {
         public_key: my_keys.public_key,
         private_key: my_keys.private_key,
+    })
+}
+
+fn query_results(deps: Deps) -> StdResult<VotesResponse> {
+    let my_results = VOTE_RESULTS.load(deps.storage)?;
+    Ok(VotesResponse {
+        final_result: my_results.final_result,
     })
 }
