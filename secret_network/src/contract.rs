@@ -1,6 +1,6 @@
 use crate::error::{ContractError, CryptoError};
 use crate::msg::{ExecuteMsg, InstantiateMsg, KeysResponse, QueryMsg, VotesResponse};
-use crate::state::{AllVoteResults, MyKeys, VoteResults, ALL_VOTE_RESULTS, MY_KEYS};
+use crate::state::{MyKeys, VoteResults, MY_KEYS, VOTE_RESULTS};
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
 };
@@ -36,11 +36,11 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::CreateKeys {} => try_create_keys(deps, env),
-        ExecuteMsg::Tally {
-            proposal_id,
-            yes_votes,
-            no_votes,
-        } => try_tally(deps, env, proposal_id, yes_votes, no_votes),
+
+        ExecuteMsg::DecryptTally {
+            public_key,
+            encrypted_message,
+        } => try_decrypt_tally(deps, env, public_key, encrypted_message),
     }
 }
 
@@ -65,86 +65,12 @@ pub fn try_create_keys(deps: DepsMut, env: Env) -> Result<Response, ContractErro
     Ok(Response::default())
 }
 
-pub fn try_tally(
+pub fn try_decrypt_tally(
     deps: DepsMut,
     _env: Env,
-    proposal_id: u8,
-    yes_votes: u8,
-    no_votes: u8,
-) -> Result<Response, ContractError> {
-    let result = if yes_votes > no_votes {
-        "yes"
-    } else if yes_votes < no_votes {
-        "no"
-    } else {
-        "tie"
-    };
-
-    let vote_results = VoteResults {
-        proposal_id,
-        final_result: result.to_string(),
-    };
-
-    // Attempt to load AllVoteResults, initialize if not present
-    let mut all_vote_results = match ALL_VOTE_RESULTS.load(deps.storage) {
-        Ok(results) => results,
-        Err(_) => AllVoteResults {
-            all_vote_results: Vec::new(),
-        },
-    };
-
-    // Check if an entry with the given proposal_id already exists
-    if let Some(existing_vote_result) = all_vote_results
-        .all_vote_results
-        .iter_mut()
-        .find(|vr| vr.proposal_id == proposal_id)
-    {
-        // Update the existing entry
-        existing_vote_result.final_result = result.to_string();
-    } else {
-        // Add the new vote results if it doesn't exist
-        all_vote_results.all_vote_results.push(vote_results);
-    }
-
-    // Save the updated AllVoteResults back to storage
-    ALL_VOTE_RESULTS.save(deps.storage, &all_vote_results)?;
-
-    Ok(Response::default())
-}
-
-pub fn aes_siv_decrypt(
-    ciphertext: &[u8],
-    ad: Option<&[&[u8]]>,
-    key: &[u8],
-) -> Result<Vec<u8>, CryptoError> {
-    let ad = ad.unwrap_or(&[&[]]);
-
-    let mut cipher = Aes128Siv::new(GenericArray::clone_from_slice(key));
-    cipher.decrypt(ad, ciphertext).map_err(|e| {
-        warn!("aes_siv_decrypt error: {:?}", e);
-        CryptoError::DecryptionError
-    })
-}
-
-#[entry_point]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg {
-        QueryMsg::GetKeys {} => to_binary(&query_keys(deps)?),
-        QueryMsg::GetVoteResults { proposal_id } => {
-            to_binary(&query_vote_results(deps, proposal_id)?)
-        }
-        QueryMsg::DecryptQuery {
-            public_key,
-            encrypted_message,
-        } => to_binary(&get_decrypted_query(deps, public_key, encrypted_message)?),
-    }
-}
-
-pub fn get_decrypted_query(
-    deps: Deps,
     public_key: Vec<u8>,
-    encrypted_message: Vec<u8>,
-) -> StdResult<String> {
+    encrypted_message: Vec<String>,
+) -> Result<Response, ContractError> {
     let my_keys = MY_KEYS.load(deps.storage)?;
 
     let my_private_key = SecretKey::from_slice(&my_keys.private_key)
@@ -159,11 +85,105 @@ pub fn get_decrypted_query(
     let ad_data: &[&[u8]] = &[];
     let ad = Some(ad_data);
 
-    let decrypted_data = aes_siv_decrypt(&encrypted_message, ad, &key);
+    //convert hex strings to Vec<u8> for decryption function
+    let encrypted_message_vecs = hex_to_vec(&encrypted_message);
 
-    let decrypted_message = String::from_utf8(decrypted_data.unwrap()).unwrap();
+    // Decrypt the data
+    let decrypted_data_vec = aes_siv_decrypt(encrypted_message_vecs, ad, &key)
+        .map_err(|e| StdError::generic_err(format!("Error decrypting data: {:?}", e)))?;
 
-    Ok(decrypted_message)
+    //push decrypted strings into a Vec
+    let mut decrypted_strings = Vec::new();
+    for decrypted_data in decrypted_data_vec {
+        let decrypted_string = String::from_utf8(decrypted_data).map_err(|e| {
+            StdError::generic_err(format!("Error converting data to string: {:?}", e))
+        })?;
+        decrypted_strings.push(decrypted_string);
+    }
+
+    // Tally the votes
+    let final_result = tally_answers(decrypted_strings);
+
+    // Save the results
+    let vote_results = VoteResults {
+        final_result: final_result.clone(),
+    };
+
+    VOTE_RESULTS.save(deps.storage, &vote_results)?;
+
+    Ok(Response::default())
+}
+
+pub fn aes_siv_decrypt(
+    ciphertexts: Vec<Vec<u8>>, // Changed to a vector of Vec<u8>
+    ad: Option<&[&[u8]]>,
+    key: &[u8],
+) -> Result<Vec<Vec<u8>>, CryptoError> {
+    let ad = ad.unwrap_or(&[&[]]);
+    let mut cipher = Aes128Siv::new(GenericArray::clone_from_slice(key));
+
+    let mut decrypted_data_vec = Vec::new();
+
+    for ciphertext in ciphertexts {
+        match cipher.decrypt(ad, &ciphertext) {
+            Ok(decrypted_data) => {
+                decrypted_data_vec.push(decrypted_data);
+            }
+            Err(e) => {
+                warn!("aes_siv_decrypt error: {:?}", e);
+                return Err(CryptoError::DecryptionError);
+            }
+        }
+    }
+
+    Ok(decrypted_data_vec)
+}
+
+fn hex_to_vec(hex_vec: &[String]) -> Vec<Vec<u8>> {
+    hex_vec
+        .iter()
+        .map(|hex| {
+            hex.trim_start_matches("0x")
+                .chars()
+                .collect::<Vec<char>>()
+                .chunks(2)
+                .filter_map(|chunk| {
+                    let hex_byte = chunk.iter().collect::<String>();
+                    u8::from_str_radix(&hex_byte, 16).ok()
+                })
+                .collect::<Vec<u8>>()
+        })
+        .collect()
+}
+
+fn tally_answers(data: Vec<String>) -> String {
+    let mut yes_count = 0;
+    let mut no_count = 0;
+
+    for item in data {
+        if item.contains("yes") {
+            yes_count += 1;
+        } else if item.contains("no") {
+            no_count += 1;
+        }
+        // Ignore any strings that don't match
+    }
+
+    if yes_count > no_count {
+        "yes".to_string()
+    } else if no_count > yes_count {
+        "no".to_string()
+    } else {
+        "tie".to_string()
+    }
+}
+
+#[entry_point]
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::GetKeys {} => to_binary(&query_keys(deps)?),
+        QueryMsg::GetResults {} => to_binary(&query_results(deps)?),
+    }
 }
 
 fn query_keys(deps: Deps) -> StdResult<KeysResponse> {
@@ -174,15 +194,9 @@ fn query_keys(deps: Deps) -> StdResult<KeysResponse> {
     })
 }
 
-fn query_vote_results(deps: Deps, proposal_id: u8) -> StdResult<VotesResponse> {
-    let all_vote_results = ALL_VOTE_RESULTS.load(deps.storage)?;
-    all_vote_results
-        .all_vote_results
-        .iter()
-        .find(|&x| x.proposal_id == proposal_id)
-        .map(|x| VotesResponse {
-            final_result: x.final_result.clone(),
-            proposal_id: x.proposal_id,
-        })
-        .ok_or_else(|| StdError::generic_err("No vote results found"))
+fn query_results(deps: Deps) -> StdResult<VotesResponse> {
+    let my_results = VOTE_RESULTS.load(deps.storage)?;
+    Ok(VotesResponse {
+        final_result: my_results.final_result,
+    })
 }

@@ -15,12 +15,14 @@ async function queryVotes(proposalId) {
 
   try {
     const votes = await contract.getVotes(proposalId);
-    // console.log(`Votes for Proposal ${proposalId}:`, votes);
+    console.log(votes);
     return votes;
   } catch (error) {
     console.error(`Error fetching votes for proposal ${proposalId}:`, error);
   }
 }
+
+// queryVotes(7);
 
 // Export the queryVotes function
 module.exports = {

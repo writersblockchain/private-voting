@@ -14,26 +14,29 @@ const secretjs = new SecretNetworkClient({
 // secret contract info
 let contractCodeHash = process.env.CODE_HASH;
 let contractAddress = process.env.SECRET_ADDRESS;
-let encrypted_data;
 let other_public_key = process.env.MY_PUB_KEY.split(",").map((num) =>
   parseInt(num, 10)
 );
 
-let get_decrypted_query = async (encrypted_message) => {
-  let query = await secretjs.query.compute.queryContract({
-    contract_address: contractAddress,
-    query: {
-      decrypt_query: {
-        public_key: other_public_key,
-        encrypted_message: encrypted_message,
+let decrypt_tally = async (encrypted_votes) => {
+  const tx = await secretjs.tx.compute.executeContract(
+    {
+      sender: wallet.address,
+      contract_address: contractAddress,
+      msg: {
+        decrypt_tally: {
+          public_key: other_public_key,
+          encrypted_message: encrypted_votes,
+        },
       },
+      code_hash: contractCodeHash,
     },
-    code_hash: contractCodeHash,
-  });
+    { gasLimit: 2_000_000 }
+  );
 
-  return query;
+  console.log(tx);
 };
 
 module.exports = {
-  get_decrypted_query,
+  decrypt_tally,
 };

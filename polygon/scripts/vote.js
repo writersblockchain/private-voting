@@ -14,7 +14,7 @@ async function vote() {
   let PrivateVoting = await hre.ethers.getContractFactory("PrivateVoting");
   const privateVoting = await PrivateVoting.attach(privateVotingAddress);
 
-  const tx = await privateVoting.vote(6, my_encrypted_message);
+  const tx = await privateVoting.vote(7, my_encrypted_message);
 
   console.log(`Transaction hash: ${tx.hash}`);
   await tx.wait();

@@ -15,13 +15,11 @@ const secretjs = new SecretNetworkClient({
 let contractCodeHash = process.env.CODE_HASH;
 let contractAddress = process.env.SECRET_ADDRESS;
 
-let get_tallied_votes = async (proposal_id) => {
+let query_tallied_votes = async () => {
   let query = await secretjs.query.compute.queryContract({
     contract_address: contractAddress,
     query: {
-      get_vote_results: {
-        proposal_id: proposal_id,
-      },
+      get_results: {},
     },
     code_hash: contractCodeHash,
   });
@@ -29,6 +27,8 @@ let get_tallied_votes = async (proposal_id) => {
   console.log(query);
 };
 
+query_tallied_votes();
+
 module.exports = {
-  get_tallied_votes,
+  query_tallied_votes,
 };
