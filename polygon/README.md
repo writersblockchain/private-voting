@@ -2,7 +2,7 @@ npx hardhat compile
 
 npx hardhat run scripts/deploy.js --network polygon
 
-PrivateVoting deployed to: 0x9aD72b95F04BA2cfF3A19bbc03fdf29B921771f6
+PrivateVoting deployed to: 0x14332ACE418E5E067e90E7fB21d329dF44F1C6b2
 
 npx hardhat --network polygon run ./scripts/create_proposal.js
 npx hardhat --network polygon run ./scripts/query_proposals.js
