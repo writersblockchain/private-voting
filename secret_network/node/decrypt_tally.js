@@ -37,6 +37,11 @@ let decrypt_tally = async (encrypted_votes) => {
   console.log(tx);
 };
 
+decrypt_tally([
+  "0x67705c189e85fe91e38406a1ee3cd38a7345986f4fe6810bc5f4a2061213d9ca2f9e3e3d451c33f605369413de42c5113c8349acb68d17061db8",
+  "0xb81ec9e3c664217b85800776e1566f8dc4c782da25a2511ec21820e2ba82224d1594948824c6672bf17627116d4e4f20fe11a6f9e749b2532d00",
+]);
+
 module.exports = {
   decrypt_tally,
 };

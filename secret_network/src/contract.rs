@@ -160,21 +160,24 @@ fn tally_answers(data: Vec<String>) -> String {
     let mut yes_count = 0;
     let mut no_count = 0;
 
-    for item in data {
+    for item in &data {
         if item.contains("yes") {
             yes_count += 1;
         } else if item.contains("no") {
             no_count += 1;
         }
-        // Ignore any strings that don't match
+        // Ignore any strings that don't match "yes" or "no"
     }
 
     if yes_count > no_count {
         "yes".to_string()
     } else if no_count > yes_count {
         "no".to_string()
-    } else {
+    } else if yes_count > 0 || no_count > 0 {
         "tie".to_string()
+    } else {
+        // No votes, return something appropriate
+        "no votes".to_string()
     }
 }
 

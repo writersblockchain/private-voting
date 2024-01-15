@@ -40,7 +40,7 @@ const ProposalsList = ({ proposals, contractABI, contractAddress }) => {
         salt: Math.random(),
       };
       let my_encrypted_message = await encrypt(msg);
-
+      console.log(choice, my_encrypted_message);
       // Call the vote function with the encrypted message
       const tx = await contract.vote(proposalId, my_encrypted_message);
       await tx.wait();
@@ -61,10 +61,10 @@ const ProposalsList = ({ proposals, contractABI, contractAddress }) => {
               <strong>Description:</strong>{" "}
               {JSON.stringify(proposal.description)}
               <br />
-              <button onClick={() => handleVote(proposal.id, "Yes")}>
+              <button onClick={() => handleVote(proposal.id, "yes")}>
                 Vote Yes
               </button>
-              <button onClick={() => handleVote(proposal.id, "No")}>
+              <button onClick={() => handleVote(proposal.id, "no")}>
                 Vote No
               </button>
             </li>

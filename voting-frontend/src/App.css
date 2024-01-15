@@ -104,7 +104,7 @@ input:focus {
 button {
   background: linear-gradient(145deg, #2a9d8f, #2f7a78);
   border: none;
-  padding: 10px 15px;
+  padding: 10px 10px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
@@ -141,8 +141,10 @@ h1 {
 
 .connect-wallet {
   position: absolute;
-  top: 0px;
+  width: 80px;
+  top: 10px;
   right: 30px;
+  font-size: 2px;
 }
 
 .proposal-text {
