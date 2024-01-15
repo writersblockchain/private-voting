@@ -57,4 +57,80 @@ function getVotes(uint proposalId) external view returns (bytes[] memory) {
     return proposals[proposalId].encryptedVotes;
 }
 
+  // Define a custom struct to represent Proposal information for queries
+    struct ProposalInfo {
+        uint id;
+        string description;
+        uint quorum;
+        uint voteCount;
+    }
+
+    function getAllOpenProposals() external view returns (ProposalInfo[] memory) {
+        uint[] memory openProposalIds = new uint[](nextProposalId);
+
+        uint openProposalCount = 0;
+        for (uint i = 1; i < nextProposalId; i++) {
+            Proposal storage proposal = proposals[i];
+            if (proposal.voteCount < proposal.quorum) {
+                openProposalIds[openProposalCount] = i;
+                openProposalCount++;
+            }
+        }
+
+        ProposalInfo[] memory openProposals = new ProposalInfo[](openProposalCount);
+
+        for (uint i = 0; i < openProposalCount; i++) {
+            uint proposalId = openProposalIds[i];
+            Proposal storage proposal = proposals[proposalId];
+            openProposals[i] = ProposalInfo({
+                id: proposal.id,
+                description: proposal.description,
+                quorum: proposal.quorum,
+                voteCount: proposal.voteCount
+            });
+        }
+
+        return openProposals;
+    }
+
+    // New struct to represent Proposal information including encrypted votes
+    struct ProposalInfoWithVotes {
+        uint id;
+        string description;
+        uint quorum;
+        uint voteCount;
+        bytes[] encryptedVotes;
+    }
+
+    // New function to query all closed proposals along with their info and encrypted votes
+    function getAllClosedProposalsWithVotes() external view returns (ProposalInfoWithVotes[] memory) {
+        uint[] memory closedProposalIds = new uint[](nextProposalId);
+
+        uint closedProposalCount = 0;
+        for (uint i = 1; i < nextProposalId; i++) {
+            Proposal storage proposal = proposals[i];
+            if (proposal.voteCount >= proposal.quorum) {
+                closedProposalIds[closedProposalCount] = i;
+                closedProposalCount++;
+            }
+        }
+
+        ProposalInfoWithVotes[] memory closedProposals = new ProposalInfoWithVotes[](closedProposalCount);
+
+        for (uint i = 0; i < closedProposalCount; i++) {
+            uint proposalId = closedProposalIds[i];
+            Proposal storage proposal = proposals[proposalId];
+            closedProposals[i] = ProposalInfoWithVotes({
+                id: proposal.id,
+                description: proposal.description,
+                quorum: proposal.quorum,
+                voteCount: proposal.voteCount,
+                encryptedVotes: proposal.encryptedVotes
+            });
+        }
+
+        return closedProposals;
+    }
+
 }
+

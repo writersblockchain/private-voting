@@ -1,41 +1,52 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import ConnectWallet from "./components/connectWallet";
+import CreateProposal from "./components/createProposal";
+import ProposalsList from "./components/proposalsList"; // Import the ProposalsList component
+import ABI from "./ABI/PrivateVoting.json";
+import { Web3Provider } from "@ethersproject/providers";
+import { Contract } from "ethers";
+
 import "./App.css";
 
+const contractABI = ABI.abi;
+const contractAddress = "0x14332ACE418E5E067e90E7fB21d329dF44F1C6b2";
+
+// Define the contract variable
+const contract = new Contract(contractAddress, contractABI);
+
 function App() {
-  const [proposalName, setProposalName] = useState("");
-  const [quorum, setQuorum] = useState(""); // State to store quorum value
-  const [proposals, setProposals] = useState([]); // To store submitted proposals
-  const [votes, setVotes] = useState({}); // To store votes for each proposal
+  // Define state for existing proposals
+  const [existingProposals, setExistingProposals] = useState([]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newProposal = {
-      name: proposalName,
-      quorum: parseInt(quorum, 10), // Parse quorum input as an integer
-    };
-    // Add the new proposal to the list of proposals
-    setProposals([...proposals, newProposal]);
-    // Initialize the votes for this proposal
-    setVotes({
-      ...votes,
-      [proposalName]: { yes: 0, no: 0, quorum: parseInt(quorum, 10) },
-    });
-    // Clear the input fields after submission
-    setProposalName("");
-    setQuorum(""); // Clear the quorum input field
-  };
+  const [openProposals, setOpenProposals] = useState([]);
 
-  const handleVote = (proposal, vote) => {
-    // Increment the vote count for the selected proposal and vote type (yes or no)
-    setVotes({
-      ...votes,
-      [proposal]: {
-        ...votes[proposal],
-        [vote]: votes[proposal][vote] + 1,
-      },
-    });
-  };
+  useEffect(() => {
+    async function fetchOpenProposals() {
+      try {
+        if (window.ethereum) {
+          const provider = new Web3Provider(window.ethereum);
+          await provider.send("eth_requestAccounts", []);
+          const signer = provider.getSigner();
+          const contract = new Contract(contractAddress, contractABI, signer);
+
+          // Call your getAllOpenProposals function from the contract
+          const openProposals = await contract.getAllOpenProposals();
+
+          console.log("Open Proposals:", openProposals); // Debugging: Log the retrieved open proposals
+
+          // Update the state with the open proposals
+          setOpenProposals(openProposals);
+        } else {
+          alert("Please install MetaMask!");
+        }
+      } catch (error) {
+        console.error("Error fetching open proposals:", error); // Debugging: Log any errors
+        alert("Failed to fetch open proposals");
+      }
+    }
+
+    fetchOpenProposals(); // Trigger the fetch operation when the component mounts
+  }, []); // Empty dependency array means this effect runs once on mount
 
   return (
     <div className="App">
@@ -44,49 +55,18 @@ function App() {
         <h1>Private Voting on Secret Network</h1>
       </div>
       <div className="columns">
+        <CreateProposal
+          contractABI={contractABI}
+          contractAddress={contractAddress}
+        />
         <div className="column">
-          <h2>Create New Proposal</h2>
-          <form onSubmit={handleSubmit}>
-            <label>
-              Create a new Yes or No Proposal:
-              <br></br>
-              <input
-                type="text"
-                value={proposalName}
-                onChange={(e) => setProposalName(e.target.value)}
-              />
-            </label>
-            <label>
-              Quorum (required number of votes):
-              <br />
-              <input
-                type="number" // Specify input type as number
-                value={quorum}
-                onChange={(e) => setQuorum(e.target.value)}
-                min="0" // Minimum value set to 0
-              />
-            </label>
-            <button type="submit">Submit Proposal</button>
-          </form>
-        </div>
-        <div className="column">
-          <h2>Existing Proposals</h2>
           <div className="proposal-list">
-            <ul style={{ listStyleType: "none", padding: 0 }}>
-              {proposals.map((proposal, index) => (
-                <li key={index}>
-                  <span className="proposal-text">{proposal}</span>
-                  <div className="vote-buttons">
-                    <button onClick={() => handleVote(proposal, "yes")}>
-                      Yes
-                    </button>
-                    <button onClick={() => handleVote(proposal, "no")}>
-                      No
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {/* Pass existingProposals as a prop to ProposalsList */}
+            <ProposalsList
+              proposals={openProposals}
+              contractABI={contractABI}
+              contractAddress={contractAddress}
+            />
           </div>
         </div>
         <div className="column">

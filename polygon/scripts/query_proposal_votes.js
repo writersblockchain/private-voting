@@ -22,7 +22,7 @@ async function queryVotes(proposalId) {
   }
 }
 
-// queryVotes(7);
+queryVotes(7);
 
 // Export the queryVotes function
 module.exports = {
