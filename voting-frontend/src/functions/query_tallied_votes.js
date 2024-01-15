@@ -24,8 +24,8 @@ const queryTalliedVotes = async () => {
     },
     code_hash: contractCodeHash,
   });
-
-  console.log(query);
+  // console.log(query);
+  return query;
 };
 
 export default queryTalliedVotes;

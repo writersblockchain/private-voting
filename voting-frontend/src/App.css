@@ -55,7 +55,8 @@ li {
   background-color: #1a1a1a;
   border: 2px solid white;
   border-radius: 10px;
-  overflow: hidden;
+  overflow-y: auto; /* Add this line to make the column scrollable */
+  max-height: 400px; /* Adjust the max height as needed */
 }
 
 /* Proposal list with custom scrollbar */
@@ -171,10 +172,13 @@ h1 {
   }
 
   .column {
-    width: 100%;
-    margin: 10px 0;
-    padding: 15px;
-    max-width: none;
+    flex: 1;
+    margin: 10px;
+    padding: 20px;
+    background-color: #1a1a1a;
+    border: 2px solid white;
+    border-radius: 10px;
+    overflow-y: auto; /* Add this line to make the column scrollable */
   }
 
   input[type="text"],

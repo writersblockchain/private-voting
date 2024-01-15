@@ -40,7 +40,14 @@ pub fn execute(
         ExecuteMsg::DecryptTally {
             public_key,
             encrypted_message,
-        } => try_decrypt_tally(deps, env, public_key, encrypted_message),
+            encrypted_message_description,
+        } => try_decrypt_tally(
+            deps,
+            env,
+            public_key,
+            encrypted_message,
+            encrypted_message_description,
+        ),
     }
 }
 
@@ -70,6 +77,7 @@ pub fn try_decrypt_tally(
     _env: Env,
     public_key: Vec<u8>,
     encrypted_message: Vec<String>,
+    encrypted_message_description: String,
 ) -> Result<Response, ContractError> {
     let my_keys = MY_KEYS.load(deps.storage)?;
 
@@ -104,11 +112,19 @@ pub fn try_decrypt_tally(
     // Tally the votes
     let final_result = tally_answers(decrypted_strings);
 
-    // Save the results
-    let vote_results = VoteResults {
-        final_result: final_result.clone(),
-    };
+    let final_result_str = format!("{} : {}", encrypted_message_description, final_result);
 
+    // Load existing vote results or initialize if not present
+    let mut vote_results = VOTE_RESULTS.may_load(deps.storage)?.unwrap_or(VoteResults {
+        final_result: Vec::new(),
+    });
+
+    // Add to vote results if not already present
+    if !vote_results.final_result.contains(&final_result_str) {
+        vote_results.final_result.push(final_result_str);
+    }
+
+    // Save the updated vote results
     VOTE_RESULTS.save(deps.storage, &vote_results)?;
 
     Ok(Response::default())

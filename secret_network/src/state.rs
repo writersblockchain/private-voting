@@ -10,7 +10,7 @@ pub struct MyKeys {
 
 #[derive(Serialize, Deserialize)]
 pub struct VoteResults {
-    pub final_result: String,
+    pub final_result: Vec<String>,
 }
 
 pub static VOTE_RESULTS: Item<VoteResults> = Item::new(b"vote_results");

@@ -12,6 +12,7 @@ pub enum ExecuteMsg {
     DecryptTally {
         public_key: Vec<u8>,
         encrypted_message: Vec<String>,
+        encrypted_message_description: String,
     },
 }
 
@@ -32,5 +33,5 @@ pub struct KeysResponse {
 // We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct VotesResponse {
-    pub final_result: String,
+    pub final_result: Vec<String>,
 }

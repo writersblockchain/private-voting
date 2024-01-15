@@ -4,16 +4,31 @@ import queryTalliedVotes from "../functions/query_tallied_votes";
 
 const ProposalResults = ({ proposals }) => {
   const [decryptedResults, setDecryptedResults] = useState([]);
-  const [showResults, setShowResults] = useState(false);
+  const [showResultIndex, setShowResultIndex] = useState(null);
 
   const decryptResults = async (proposalIndex) => {
     const encryptedVotes = proposals[proposalIndex].encryptedVotes;
     const decryptedResult = await decryptTally(encryptedVotes);
-    const query = await queryTalliedVotes();
-    const newDecryptedResults = [...decryptedResults];
-    newDecryptedResults[proposalIndex] = decryptedResult;
-    setDecryptedResults(newDecryptedResults);
-    setShowResults(true);
+
+    // Ensure that decryptedResults[index] is initialized as an object
+    if (!decryptedResults[proposalIndex]) {
+      decryptedResults[proposalIndex] = {};
+    }
+
+    decryptedResults[proposalIndex].decryptedResult = decryptedResult;
+
+    // Trigger the queryTalliedVotes function
+    const queriedVotes = await queryTalliedVotes();
+
+    // Ensure that decryptedResults[index] is initialized as an object
+    if (!decryptedResults[proposalIndex]) {
+      decryptedResults[proposalIndex] = {};
+    }
+
+    decryptedResults[proposalIndex].talliedVotes = queriedVotes;
+
+    // Set the index to show the result for this proposal
+    setShowResultIndex(proposalIndex);
   };
 
   return (
@@ -29,12 +44,19 @@ const ProposalResults = ({ proposals }) => {
               {JSON.stringify(proposal.description)}
               <br />
               <button onClick={() => decryptResults(index)}>Decrypt</button>
-              {showResults && decryptedResults[index] && (
+              {showResultIndex === index && decryptedResults[index] && (
                 <div>
                   <strong>Decrypted Result:</strong>{" "}
                   {JSON.stringify(decryptedResults[index].decryptedResult)}
                 </div>
               )}
+              {showResultIndex === index &&
+                decryptedResults[index]?.talliedVotes && (
+                  <div>
+                    <strong>Tallied Votes:</strong>{" "}
+                    {JSON.stringify(decryptedResults[index].talliedVotes)}
+                  </div>
+                )}
             </li>
           ))
         )}
