@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import ConnectWallet from "./components/connectWallet";
 import CreateProposal from "./components/createProposal";
-import ProposalsList from "./components/proposalsList"; // Import the ProposalsList component
+import ProposalsList from "./components/proposalsList";
+import ProposalResults from "./components/proposalResults";
 import ABI from "./ABI/PrivateVoting.json";
 import { Web3Provider } from "@ethersproject/providers";
 import { Contract } from "ethers";
@@ -15,10 +16,8 @@ const contractAddress = "0x14332ACE418E5E067e90E7fB21d329dF44F1C6b2";
 const contract = new Contract(contractAddress, contractABI);
 
 function App() {
-  // Define state for existing proposals
-  const [existingProposals, setExistingProposals] = useState([]);
-
   const [openProposals, setOpenProposals] = useState([]);
+  const [closedProposals, setClosedProposals] = useState([]); // Define state for closed proposals
 
   useEffect(() => {
     async function fetchOpenProposals() {
@@ -31,11 +30,15 @@ function App() {
 
           // Call your getAllOpenProposals function from the contract
           const openProposals = await contract.getAllOpenProposals();
+          const closedProposals =
+            await contract.getAllClosedProposalsWithVotes(); // Fetch closed proposals
 
           console.log("Open Proposals:", openProposals); // Debugging: Log the retrieved open proposals
+          console.log("Closed Proposals:", closedProposals); // Debugging: Log the retrieved closed proposals
 
-          // Update the state with the open proposals
+          // Update the state with the open and closed proposals
           setOpenProposals(openProposals);
+          setClosedProposals(closedProposals);
         } else {
           alert("Please install MetaMask!");
         }
@@ -47,7 +50,6 @@ function App() {
 
     fetchOpenProposals(); // Trigger the fetch operation when the component mounts
   }, []); // Empty dependency array means this effect runs once on mount
-
   return (
     <div className="App">
       <ConnectWallet />
@@ -70,7 +72,7 @@ function App() {
           </div>
         </div>
         <div className="column">
-          <h2>Proposal Results</h2>
+          <ProposalResults proposals={closedProposals} />
         </div>
       </div>
     </div>
