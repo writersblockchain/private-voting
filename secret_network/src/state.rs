@@ -13,6 +13,13 @@ pub struct VoteResults {
     pub final_result: Vec<String>,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct DecryptedVotes {
+    pub decrypted_votes: Vec<String>,
+}
+
+pub static DECRYPTED_VOTES: Item<DecryptedVotes> = Item::new(b"decrypted_votes");
+
 pub static VOTE_RESULTS: Item<VoteResults> = Item::new(b"vote_results");
 
 pub static MY_KEYS: Item<MyKeys> = Item::new(b"my_keys");

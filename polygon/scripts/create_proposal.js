@@ -8,7 +8,13 @@ async function create_proposal() {
   let PrivateVoting = await hre.ethers.getContractFactory("PrivateVoting");
   const privateVoting = await PrivateVoting.attach(privateVotingAddress);
 
-  const tx = await privateVoting.createProposal("Are you excited?", 2);
+  const proposal_description = "Is this proposal id 4";
+  const proposal_quorum = 2;
+
+  const tx = await privateVoting.createProposal(
+    proposal_description,
+    proposal_quorum
+  );
 
   console.log(`Transaction hash: ${tx.hash}`);
   await tx.wait();
