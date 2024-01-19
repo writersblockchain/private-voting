@@ -15,20 +15,17 @@ const secretjs = new SecretNetworkClient({
 let contractCodeHash = process.env.CODE_HASH;
 let contractAddress = process.env.SECRET_ADDRESS;
 
-let query_tallied_votes = async () => {
+let get_keys = async () => {
   let query = await secretjs.query.compute.queryContract({
     contract_address: contractAddress,
     query: {
-      get_results: {},
+      get_keys: {},
     },
     code_hash: contractCodeHash,
   });
-
-  console.log(query);
+  const publicKeyString = query.public_key.join(",");
+  console.log(publicKeyString);
+  // console.log(query);
 };
 
-query_tallied_votes();
-
-module.exports = {
-  query_tallied_votes,
-};
+get_keys();

@@ -1,8 +1,6 @@
 use crate::error::{ContractError, CryptoError};
-use crate::msg::{
-    ExecuteMsg, InstantiateMsg, KeysResponse, QueryMsg, ResultsResponse, VotesResponse,
-};
-use crate::state::{DecryptedVotes, MyKeys, DECRYPTED_VOTES, MY_KEYS, VOTE_RESULTS};
+use crate::msg::{ExecuteMsg, InstantiateMsg, KeysResponse, QueryMsg, VotesResponse};
+use crate::state::{DecryptedVotes, MyKeys, DECRYPTED_VOTES, MY_KEYS};
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
 };
@@ -39,7 +37,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::CreateKeys {} => try_create_keys(deps, env),
 
-        ExecuteMsg::DecryptTally {
+        ExecuteMsg::DecryptVotes {
             public_key,
             encrypted_message,
         } => try_decrypt_votes(deps, env, public_key, encrypted_message),
@@ -187,36 +185,10 @@ pub fn extract_proposal_id(s: &String) -> Result<u64, StdError> {
         .ok_or(StdError::generic_err("Error parsing proposal_id"))
 }
 
-// fn tally_answers(data: Vec<String>) -> String {
-//     let mut yes_count = 0;
-//     let mut no_count = 0;
-
-//     for item in &data {
-//         if item.contains("yes") {
-//             yes_count += 1;
-//         } else if item.contains("no") {
-//             no_count += 1;
-//         }
-//         // Ignore any strings that don't match "yes" or "no"
-//     }
-
-//     if yes_count > no_count {
-//         "yes".to_string()
-//     } else if no_count > yes_count {
-//         "no".to_string()
-//     } else if yes_count > 0 || no_count > 0 {
-//         "tie".to_string()
-//     } else {
-//         // No votes, return something appropriate
-//         "no votes".to_string()
-//     }
-// }
-
 #[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetKeys {} => to_binary(&query_keys(deps)?),
-        QueryMsg::GetResults {} => to_binary(&query_results(deps)?),
         QueryMsg::GetVotes {} => to_binary(&query_votes(deps)?),
     }
 }
@@ -225,14 +197,6 @@ fn query_keys(deps: Deps) -> StdResult<KeysResponse> {
     let my_keys = MY_KEYS.load(deps.storage)?;
     Ok(KeysResponse {
         public_key: my_keys.public_key,
-        private_key: my_keys.private_key,
-    })
-}
-
-fn query_results(deps: Deps) -> StdResult<ResultsResponse> {
-    let results = VOTE_RESULTS.load(deps.storage)?;
-    Ok(ResultsResponse {
-        final_result: results.final_result,
     })
 }
 

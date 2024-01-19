@@ -7,7 +7,6 @@ contract.wasm.gz*
 /node_modules
 /node_modules*
 node_modules*
-.env*
 # Cargo+Git helper file (https://github.com/rust-lang/cargo/blob/0.44.1/src/cargo/sources/git/utils.rs#L320-L327)
 .cargo-ok
 
@@ -20,8 +19,6 @@ node_modules*
 # IDEs
 *.iml
 .idea
-
-
 
 # Created by .ignore support plugin (hsz.mobi)
 ### Node template

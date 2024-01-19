@@ -1,4 +1,3 @@
-// Inside ProposalsList.js
 import React, { useState } from "react";
 import { Web3Provider } from "@ethersproject/providers";
 import { Contract } from "ethers";
@@ -7,7 +6,7 @@ import encrypt from "../functions/encrypt.js";
 const ProposalsList = ({ proposals, contractABI, contractAddress }) => {
   const [voteChoice, setVoteChoice] = useState(""); // State to store the selected vote choice
 
-  const handleVote = async (proposalId, choice) => {
+  const handleVote = async (proposal, choice) => {
     try {
       if (!window.ethereum) {
         alert("Please install MetaMask!");
@@ -23,26 +22,18 @@ const ProposalsList = ({ proposals, contractABI, contractAddress }) => {
 
       const contract = new Contract(contractAddress, contractABI, signer);
 
-      //   // Check if the user has already voted for this proposal
-      //   const hasVoted = await contract.hasVoted(
-      //     proposalId,
-      //     window.ethereum.selectedAddress
-      //   );
-
-      //   if (hasVoted) {
-      //     alert("You have already voted for this proposal.");
-      //     return;
-      //   }
-
-      // Encrypt the message with the specified format
       let msg = {
         answer: choice,
+        proposal_id: parseInt(proposal.id, 10),
+        proposal_description: proposal.description,
         salt: Math.random(),
       };
       let my_encrypted_message = await encrypt(msg);
       console.log(choice, my_encrypted_message);
+      console.log("vote: ", msg);
+
       // Call the vote function with the encrypted message
-      const tx = await contract.vote(proposalId, my_encrypted_message);
+      const tx = await contract.vote(proposal.id, my_encrypted_message);
       await tx.wait();
       alert("Vote submitted successfully!");
     } catch (error) {
@@ -61,10 +52,10 @@ const ProposalsList = ({ proposals, contractABI, contractAddress }) => {
               <strong>Description:</strong>{" "}
               {JSON.stringify(proposal.description)}
               <br />
-              <button onClick={() => handleVote(proposal.id, "yes")}>
+              <button onClick={() => handleVote(proposal, "yes")}>
                 Vote Yes
               </button>
-              <button onClick={() => handleVote(proposal.id, "no")}>
+              <button onClick={() => handleVote(proposal, "no")}>
                 Vote No
               </button>
             </li>

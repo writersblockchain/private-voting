@@ -9,7 +9,7 @@ pub struct InstantiateMsg {}
 pub enum ExecuteMsg {
     CreateKeys {},
 
-    DecryptTally {
+    DecryptVotes {
         public_key: Vec<u8>,
         encrypted_message: Vec<String>,
     },
@@ -19,7 +19,6 @@ pub enum ExecuteMsg {
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     GetKeys {},
-    GetResults {},
     GetVotes {},
 }
 
@@ -27,13 +26,6 @@ pub enum QueryMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct KeysResponse {
     pub public_key: Vec<u8>,
-    pub private_key: Vec<u8>,
-}
-
-// We define a custom struct for each query response
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct ResultsResponse {
-    pub final_result: Vec<String>,
 }
 
 // We define a custom struct for each query response
