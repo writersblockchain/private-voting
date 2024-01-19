@@ -17,6 +17,7 @@ function App() {
   const [closedProposals, setClosedProposals] = useState([]);
 
   useEffect(() => {
+    console.log(contractAddress);
     fetchProposals();
     subscribeToProposalChanges();
     const interval = setInterval(fetchClosedProposals, 10000); // Poll every 10 seconds
