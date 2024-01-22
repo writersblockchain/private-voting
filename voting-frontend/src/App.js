@@ -20,7 +20,7 @@ function App() {
     console.log(contractAddress);
     fetchProposals();
     subscribeToProposalChanges();
-    const interval = setInterval(fetchClosedProposals, 10000); // Poll every 10 seconds
+    const interval = setInterval(fetchClosedProposals, 10000);
 
     return () => {
       unsubscribeFromProposalChanges();
@@ -28,14 +28,25 @@ function App() {
     };
   }, []);
 
+  const getProvider = async () => {
+    if (!window.ethereum) {
+      alert("Please install MetaMask!");
+      return null;
+    }
+
+    // Request access to the signer (MetaMask account)
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+
+    const provider = new Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    return provider;
+  };
+
   const fetchProposals = async () => {
     try {
-      if (!window.ethereum) {
-        alert("Please install MetaMask!");
-        return;
-      }
+      const provider = await getProvider();
+      if (!provider) return;
 
-      const provider = new Web3Provider(window.ethereum);
       const contract = new Contract(contractAddress, contractABI, provider);
 
       const open = await contract.getAllProposals(true);
@@ -49,9 +60,9 @@ function App() {
   };
 
   const fetchClosedProposals = async () => {
-    if (!window.ethereum) return;
+    const provider = await getProvider();
+    if (!provider) return;
 
-    const provider = new Web3Provider(window.ethereum);
     const contract = new Contract(contractAddress, contractABI, provider);
     const allClosedProposals = await contract.getAllProposals(false);
 
@@ -59,36 +70,33 @@ function App() {
   };
 
   const subscribeToProposalChanges = async () => {
-    if (!window.ethereum) return;
+    const provider = await getProvider();
+    if (!provider) return;
 
-    const provider = new Web3Provider(window.ethereum);
     const contract = new Contract(contractAddress, contractABI, provider);
 
-    // Listen for the 'ProposalCreated' event
     contract.on("ProposalCreated", (newProposalId) => {
       addNewProposal(newProposalId.toNumber());
     });
 
-    // Existing listener for 'VotingClosed'
     contract.on("VotingClosed", (proposalId) => {
       updateProposals(proposalId.toNumber());
     });
   };
 
   const addNewProposal = async (newProposalId) => {
-    const provider = new Web3Provider(window.ethereum);
+    const provider = await getProvider();
+    if (!provider) return;
+
     const contract = new Contract(contractAddress, contractABI, provider);
 
-    // Fetch the new proposal details using the correct function from the contract
     const newProposalData = await contract.getProposal(newProposalId);
 
-    // Create a proposal object to match the structure used in your app
     const newProposal = {
       id: newProposalData[0],
       description: newProposalData[1],
       quorum: newProposalData[2],
       voteCount: newProposalData[3],
-      // Add more fields here if needed
     };
 
     setOpenProposals([...openProposals, newProposal]);
@@ -109,13 +117,13 @@ function App() {
   };
 
   const unsubscribeFromProposalChanges = () => {
-    if (!window.ethereum) return;
-
     const provider = new Web3Provider(window.ethereum);
+    if (!provider) return;
+
     const contract = new Contract(contractAddress, contractABI, provider);
 
     contract.removeAllListeners("VotingClosed");
-    contract.removeAllListeners("ProposalCreated"); // Remove listener for 'ProposalCreated'
+    contract.removeAllListeners("ProposalCreated");
   };
 
   return (
