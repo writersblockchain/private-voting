@@ -13,9 +13,7 @@ module.exports = {
     },
   },
   networks: {
-    sepolia: {
-      url: `https://sepolia.infura.io/v3/${process.env.INFURA_KEY}`,
-      accounts: [process.env.PRIVATE_KEY],
-    },
+    url: `https://sepolia.infura.io/v3/${process.env.INFURA_KEY}`,
+    accounts: [process.env.PRIVATE_KEY],
   },
 };
