@@ -17,7 +17,7 @@ function App() {
   const [closedProposals, setClosedProposals] = useState([]);
 
   useEffect(() => {
-    console.log(contractAddress);
+    console.log("contract address: ", contractAddress);
     fetchProposals();
     subscribeToProposalChanges();
     const interval = setInterval(fetchClosedProposals, 10000);
