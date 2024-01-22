@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ethers } from "ethers";
+import { Web3Provider } from "@ethersproject/providers";
 
 const ConnectWallet = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -12,7 +12,7 @@ const ConnectWallet = () => {
           method: "eth_requestAccounts",
         });
 
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const provider = new Web3Provider(window.ethereum);
 
         const signer = provider.getSigner();
 
