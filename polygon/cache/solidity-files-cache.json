@@ -35,6 +35,41 @@
       "artifacts": [
         "PrivateVoting"
       ]
+    },
+    "/Users/sean_conrad/Desktop/private-voting/polygon/contracts/PrivateVoting.sol": {
+      "lastModificationDate": 1705649841815,
+      "contentHash": "94a13359e6d1d1622d0b142f33f09e27",
+      "sourceName": "contracts/PrivateVoting.sol",
+      "solcConfig": {
+        "version": "0.8.9",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.9"
+      ],
+      "artifacts": [
+        "PrivateVoting"
+      ]
     }
   }
 }
