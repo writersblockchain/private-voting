@@ -27,10 +27,15 @@ function App() {
   const fetchProposals = async () => {
     try {
       // Initialize Ethers provider
-      const provider = new ethers.providers.StaticJsonRpcProvider(
-        `https://sepolia.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`,
-        "sepolia"
-      );
+      // Use the mainnet
+      const network = "sepolia";
+
+      // Specify your own API keys
+      // Each is optional, and if you omit it the default
+      // API key for that service will be used.
+      const provider = ethers.getDefaultProvider(network, {
+        infura: process.env.REACT_APP_INFURA_KEY,
+      });
 
       // Create a new Ethers contract instance
       const contract = new ethers.Contract(
