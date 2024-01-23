@@ -6,7 +6,6 @@ import ProposalResults from "./components/proposalResults";
 import ABI from "./ABI/PrivateVoting.json";
 import { ethers } from "ethers";
 import "./App.css";
-// import "@ethersproject/shims";
 
 const contractABI = ABI.abi;
 const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
@@ -42,7 +41,15 @@ function App() {
         console.error("Error fetching proposals:", error);
       }
     };
+
+    // Call the function immediately to fetch initial data
     fetchProposals();
+
+    // Set up the interval to fetch data every 10 seconds
+    const intervalId = setInterval(fetchProposals, 10000);
+
+    // Clean up the interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
