@@ -5,14 +5,12 @@ import ProposalsList from "./components/proposalsList";
 import ProposalResults from "./components/proposalResults";
 import ABI from "./ABI/PrivateVoting.json";
 import { ethers } from "ethers";
-import { InfuraProvider } from "@ethersproject/providers";
+import { Web3Provider, InfuraProvider } from "@ethersproject/providers";
 import "./App.css";
 
 const contractABI = ABI.abi;
 const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
 const API_KEY = process.env.REACT_APP_INFURA_KEY;
-// const PRIVATE_KEY = process.env.REACT_APP_PRIVATE_KEY;
-const provider = new InfuraProvider("sepolia", API_KEY);
 
 function App() {
   const [openProposals, setOpenProposals] = useState([]);
@@ -28,6 +26,10 @@ function App() {
   }, []);
 
   const fetchProposals = async () => {
+    // await window.ethereum.request({ method: "eth_requestAccounts" });
+
+    const provider = new InfuraProvider("sepolia", API_KEY);
+    // await provider.send("eth_requestAccounts", []);
     try {
       const contract = new ethers.Contract(
         contractAddress,
