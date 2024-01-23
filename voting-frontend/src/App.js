@@ -6,7 +6,7 @@ import ProposalResults from "./components/proposalResults";
 import ABI from "./ABI/PrivateVoting.json";
 import { ethers } from "ethers";
 import "./App.css";
-import "@ethersproject/shims";
+// import "@ethersproject/shims";
 
 const contractABI = ABI.abi;
 const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
@@ -16,44 +16,34 @@ function App() {
   const [closedProposals, setClosedProposals] = useState([]);
 
   useEffect(() => {
-    fetchProposals();
-    const interval = setInterval(fetchProposals, 10000); // Poll every 10 seconds
+    const fetchProposals = async () => {
+      try {
+        if (window.ethereum) {
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          await provider.send("eth_requestAccounts", []);
+          const signer = provider.getSigner();
+          const contract = new ethers.Contract(
+            contractAddress,
+            contractABI,
+            signer
+          );
 
-    return () => {
-      clearInterval(interval);
+          // Fetch open proposals
+          const open = await contract.getAllProposals(true);
+          setOpenProposals(open);
+
+          // Fetch closed proposals
+          const closed = await contract.getAllProposals(false);
+          setClosedProposals(closed);
+        } else {
+          alert("Please install MetaMask!");
+        }
+      } catch (error) {
+        console.error("Error fetching proposals:", error);
+      }
     };
+    fetchProposals();
   }, []);
-
-  const fetchProposals = async () => {
-    try {
-      // Initialize Ethers provider
-      // Use the mainnet
-      const network = "sepolia";
-
-      // Specify your own API keys
-      // Each is optional, and if you omit it the default
-      // API key for that service will be used.
-      const provider = ethers.getDefaultProvider(network, {
-        infura: process.env.REACT_APP_INFURA_KEY,
-      });
-
-      // Create a new Ethers contract instance
-      const contract = new ethers.Contract(
-        contractAddress,
-        contractABI,
-        provider
-      );
-
-      // Call the getAllProposals method
-      const open = await contract.getAllProposals(true);
-      setOpenProposals(open);
-
-      const closed = await contract.getAllProposals(false);
-      setClosedProposals(closed);
-    } catch (error) {
-      console.error("Error fetching proposals:", error);
-    }
-  };
 
   return (
     <div className="App">
