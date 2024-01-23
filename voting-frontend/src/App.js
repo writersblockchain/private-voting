@@ -28,7 +28,8 @@ function App() {
     try {
       // Initialize Ethers provider
       const provider = new ethers.providers.JsonRpcProvider(
-        `https://sepolia.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`
+        `https://sepolia.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`,
+        "sepolia"
       );
 
       // Create a new Ethers contract instance
