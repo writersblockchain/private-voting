@@ -4,15 +4,15 @@ import CreateProposal from "./components/createProposal";
 import ProposalsList from "./components/proposalsList";
 import ProposalResults from "./components/proposalResults";
 import ABI from "./ABI/PrivateVoting.json";
-import { ethers, JsonRpcProvider } from "ethers";
-
+import { ethers } from "ethers";
+import { InfuraProvider } from "@ethersproject/providers";
 import "./App.css";
 
 const contractABI = ABI.abi;
 const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
-const infuraProvider = new JsonRpcProvider(
-  `https://sepolia.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`
-);
+const API_KEY = process.env.REACT_APP_INFURA_KEY;
+// const PRIVATE_KEY = process.env.REACT_APP_PRIVATE_KEY;
+const provider = new InfuraProvider("sepolia", API_KEY);
 
 function App() {
   const [openProposals, setOpenProposals] = useState([]);
@@ -32,7 +32,7 @@ function App() {
       const contract = new ethers.Contract(
         contractAddress,
         contractABI,
-        infuraProvider
+        provider
       );
 
       const open = await contract.getAllProposals(true);

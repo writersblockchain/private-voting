@@ -15,12 +15,8 @@ const CreateProposal = ({ contractABI, contractAddress }) => {
 
     try {
       setIsSubmitting(true);
-
-      // Request access to the user's Ethereum account
-      await window.ethereum.request({ method: "eth_requestAccounts" });
-
-      // Use the window.ethereum provider
       const provider = new Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
       const signer = provider.getSigner();
 
       const contract = new Contract(contractAddress, contractABI, signer);
@@ -29,11 +25,17 @@ const CreateProposal = ({ contractABI, contractAddress }) => {
         parseInt(quorum, 10)
       );
 
-      console.log(tx);
+      // Wait for the transaction receipt
+      const receipt = await tx.wait();
 
-      alert(`Proposal created successfully!`);
+      // Check the confirmation count
+      const confirmations = await receipt.confirmations;
+
+      alert(
+        `Proposal created successfully with ${confirmations} confirmations!`
+      );
     } catch (error) {
-      console.error("Failed to create proposal", error);
+      console.error(error);
       alert("Failed to create proposal");
     } finally {
       setIsSubmitting(false);

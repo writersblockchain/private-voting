@@ -1,13 +1,15 @@
 import React, { useState } from "react";
-import { Web3Provider } from "@ethersproject/providers";
+import { Web3Provider, InfuraProvider } from "@ethersproject/providers";
+import { ethers, Wallet } from "ethers";
 
 const ConnectWallet = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [userAddress, setUserAddress] = useState("");
 
-  // const infuraProvider = new JsonRpcProvider(
-  //   `https://sepolia.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`
-  // );
+  const API_KEY = process.env.REACT_APP_INFURA_KEY;
+  const PRIVATE_KEY = process.env.REACT_APP_PRIVATE_KEY;
+  const infuraProvider = new InfuraProvider("sepolia", API_KEY);
+  // const provider_Metamask = new Web3Provider(window.ethereum);
 
   const connectWalletHandler = async () => {
     if (window.ethereum) {
@@ -21,9 +23,7 @@ const ConnectWallet = () => {
           return;
         }
 
-        // Use Web3Provider to wrap window.ethereum
-        const provider = new Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
+        const signer = new ethers.Wallet(PRIVATE_KEY, infuraProvider);
         const address = await signer.getAddress();
 
         setIsConnected(true);
@@ -37,19 +37,6 @@ const ConnectWallet = () => {
       alert("Please install MetaMask!");
     }
   };
-
-  // // Example usage of Infura provider (e.g., reading contract state)
-  // useEffect(() => {
-  //   if (isConnected) {
-  //     // Example function call using Infura provider
-  //     async function getBlockNumber() {
-  //       const blockNumber = await infuraProvider.getBlockNumber();
-  //       console.log("Current block number:", blockNumber);
-  //     }
-
-  //     getBlockNumber();
-  //   }
-  // }, [isConnected, infuraProvider]);
 
   return (
     <div className="connect-wallet">
