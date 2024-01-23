@@ -5,21 +5,31 @@ const ConnectWallet = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [userAddress, setUserAddress] = useState("");
 
+  // const infuraProvider = new JsonRpcProvider(
+  //   `https://sepolia.infura.io/v3/${process.env.REACT_APP_INFURA_KEY}`
+  // );
+
   const connectWalletHandler = async () => {
     if (window.ethereum) {
       try {
-        await window.ethereum.request({
+        const accounts = await window.ethereum.request({
           method: "eth_requestAccounts",
         });
 
-        const provider = new Web3Provider(window.ethereum);
+        if (accounts.length === 0) {
+          console.log("No account found");
+          return;
+        }
 
+        // Use Web3Provider to wrap window.ethereum
+        const provider = new Web3Provider(window.ethereum);
         const signer = provider.getSigner();
+        const address = await signer.getAddress();
 
         setIsConnected(true);
-        setUserAddress(await signer.getAddress());
+        setUserAddress(address);
 
-        console.log("Connected", userAddress);
+        console.log("Connected", address);
       } catch (error) {
         console.error("Error connecting to MetaMask", error);
       }
@@ -28,10 +38,25 @@ const ConnectWallet = () => {
     }
   };
 
+  // // Example usage of Infura provider (e.g., reading contract state)
+  // useEffect(() => {
+  //   if (isConnected) {
+  //     // Example function call using Infura provider
+  //     async function getBlockNumber() {
+  //       const blockNumber = await infuraProvider.getBlockNumber();
+  //       console.log("Current block number:", blockNumber);
+  //     }
+
+  //     getBlockNumber();
+  //   }
+  // }, [isConnected, infuraProvider]);
+
   return (
     <div className="connect-wallet">
       <button onClick={connectWalletHandler}>
-        {isConnected ? "Connected" : "Connect Wallet"}
+        {isConnected
+          ? `Connected: ${userAddress.substring(0, 6)}...`
+          : "Connect Wallet"}
       </button>
     </div>
   );

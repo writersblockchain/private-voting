@@ -1,7 +1,7 @@
 import React from "react";
 import { queryDecryptedVotes } from "../functions/query_decrypted_votes.js";
 import { queryVotes } from "../functions/query_proposal_votes.js";
-import { queryAllProposals } from "../functions/query_all_proposals.js";
+// import { queryAllProposals } from "../functions/query_all_proposals.js";
 import { decrypt } from "../functions/decrypt.js";
 
 async function handleDecryptVotes(proposalId) {

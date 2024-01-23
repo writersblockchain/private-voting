@@ -1,11 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import { Web3Provider } from "@ethersproject/providers";
 import { Contract } from "ethers";
 import encrypt from "../functions/encrypt.js";
 
 const ProposalsList = ({ proposals, contractABI, contractAddress }) => {
-  const [voteChoice, setVoteChoice] = useState(""); // State to store the selected vote choice
-
   const handleVote = async (proposal, choice) => {
     try {
       if (!window.ethereum) {
@@ -16,8 +14,8 @@ const ProposalsList = ({ proposals, contractABI, contractAddress }) => {
       // Request access to the signer (MetaMask account)
       await window.ethereum.request({ method: "eth_requestAccounts" });
 
+      // Use Web3Provider to wrap window.ethereum
       const provider = new Web3Provider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
       const signer = provider.getSigner();
 
       const contract = new Contract(contractAddress, contractABI, signer);
@@ -29,15 +27,13 @@ const ProposalsList = ({ proposals, contractABI, contractAddress }) => {
         salt: Math.random(),
       };
       let my_encrypted_message = await encrypt(msg);
-      console.log(choice, my_encrypted_message);
-      console.log("vote: ", msg);
 
       // Call the vote function with the encrypted message
       const tx = await contract.vote(proposal.id, my_encrypted_message);
       await tx.wait();
       alert("Vote submitted successfully!");
     } catch (error) {
-      console.error(error);
+      console.error("Failed to vote.", error);
       alert("Failed to vote.");
     }
   };
