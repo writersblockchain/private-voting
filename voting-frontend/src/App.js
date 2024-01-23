@@ -6,6 +6,7 @@ import ProposalResults from "./components/proposalResults";
 import ABI from "./ABI/PrivateVoting.json";
 import { ethers } from "ethers";
 import "./App.css";
+import "@ethersproject/shims";
 
 const contractABI = ABI.abi;
 const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
