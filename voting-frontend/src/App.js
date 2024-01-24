@@ -13,7 +13,6 @@ const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
 function App() {
   const [openProposals, setOpenProposals] = useState([]);
   const [closedProposals, setClosedProposals] = useState([]);
-
   useEffect(() => {
     const fetchProposals = async () => {
       try {
@@ -29,7 +28,11 @@ function App() {
 
           // Fetch open proposals
           const open = await contract.getAllProposals(true);
-          setOpenProposals(open);
+          if (open.length === 0) {
+            console.log("No open proposals");
+          } else {
+            setOpenProposals(open);
+          }
 
           // Fetch closed proposals
           const closed = await contract.getAllProposals(false);
@@ -52,6 +55,22 @@ function App() {
     return () => clearInterval(intervalId);
   }, []);
 
+  const refreshProposals = async () => {
+    await new Promise((resolve) => setTimeout(resolve, 3000)); // 3 seconds delay
+
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = provider.getSigner();
+    const contract = new ethers.Contract(contractAddress, contractABI, signer);
+    // Re-fetch open proposals
+    const open = await contract.getAllProposals(true);
+    setOpenProposals(open);
+
+    // Re-fetch closed proposals
+    const closed = await contract.getAllProposals(false);
+    setClosedProposals(closed);
+  };
+
   return (
     <div className="App">
       <ConnectWallet />
@@ -69,6 +88,7 @@ function App() {
               proposals={openProposals}
               contractABI={contractABI}
               contractAddress={contractAddress}
+              onVote={refreshProposals}
             />
           </div>
         </div>
